@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@doocs/md-cli": "^2.1.3"
+  }
+}

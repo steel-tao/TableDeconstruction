@@ -1,0 +1,50 @@
+/*
+ * Doocs custom theme baseline
+ *
+ * Doocs generates inline styles for WeChat article output. Keep the visual
+ * contract here, then map these values into the Doocs theme configuration or
+ * apply them as a controlled post-processing step.
+ */
+
+:root {
+  --wechat-primary: #c2410c;
+  --wechat-ink: #1f2937;
+  --wechat-muted: #6b7280;
+  --wechat-border: #fed7aa;
+  --wechat-surface: #fff7ed;
+  --wechat-code-surface: #111827;
+}
+
+/* Article-level fallback selectors for rendered HTML previews. */
+[data-role='outer'] {
+  color: var(--wechat-ink);
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  line-height: 1.8;
+}
+
+[data-role='outer'] h1,
+[data-role='outer'] h2,
+[data-role='outer'] h3 {
+  color: var(--wechat-primary) !important;
+}
+
+[data-role='outer'] blockquote {
+  border-left: 4px solid var(--wechat-primary) !important;
+  background: var(--wechat-surface) !important;
+  color: var(--wechat-muted) !important;
+  padding: 0.75em 1em !important;
+}
+
+[data-role='outer'] code {
+  background: var(--wechat-surface) !important;
+  color: var(--wechat-primary) !important;
+}
+
+[data-role='outer'] pre {
+  background: var(--wechat-code-surface) !important;
+  border-radius: 4px;
+}
+
+[data-role='outer'] a {
+  color: var(--wechat-primary) !important;
+}
