@@ -3,8 +3,8 @@
  * @description 数据库驱动的发布管理器 - 完全替代内存存储
  */
 
-import * as WechatService from '../wechat/index';
-import { getDatabase, PublishRecordDB } from '../../db/database';
+import * as WechatService from '../wechat/index.js';
+import { getDatabase, PublishRecordDB } from '../../db/database.js';
 
 // ============================================================================
 // 类型定义（与原 index.ts 相同）
@@ -29,7 +29,9 @@ export interface PublishStats {
 export interface PublishRecord {
   id: string;
   title: string;
-  content: string;
+  content: string;  // 原始内容
+  htmlContent?: string;  // Doocs 排版后的 HTML
+  markdownContent?: string;  // 原始 Markdown（备用）
   status: PublishStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -55,6 +57,8 @@ function dbToPublishRecord(dbRecord: PublishRecordDB): PublishRecord {
     id: dbRecord.id,
     title: dbRecord.title,
     content: dbRecord.content,
+    htmlContent: dbRecord.html_content,
+    markdownContent: dbRecord.markdown_content,
     status: dbRecord.status as PublishStatus,
     createdAt: new Date(dbRecord.created_at),
     updatedAt: new Date(dbRecord.updated_at),
@@ -272,6 +276,36 @@ export class PublishManager {
     return records.map(dbToPublishRecord);
   }
 
+  async updatePublishRecord(
+    recordId: string,
+    partial: Partial<PublishRecord>
+  ): Promise<PublishRecord | null> {
+    const db = getDatabase();
+    const existing = db.getPublishRecord(recordId);
+    if (!existing) return null;
+
+    const update: Partial<PublishRecordDB> = {};
+    if (partial.title !== undefined) update.title = partial.title;
+    if (partial.content !== undefined) update.content = partial.content;
+    if (partial.htmlContent !== undefined) update.html_content = partial.htmlContent;
+    if (partial.markdownContent !== undefined) update.markdown_content = partial.markdownContent;
+    if (partial.status !== undefined) update.status = partial.status;
+    if (partial.reviewer !== undefined) update.reviewer = partial.reviewer;
+    if (partial.reviewComment !== undefined) update.review_comment = partial.reviewComment;
+    if (partial.wechatMsgId !== undefined) update.wechat_msg_id = partial.wechatMsgId;
+    if (partial.publishedAt !== undefined) {
+      update.published_at = partial.publishedAt?.toISOString();
+    }
+    if (partial.filePath !== undefined) update.file_path = partial.filePath;
+    if (partial.creator !== undefined) update.creator = partial.creator;
+    if (partial.scheduledTime !== undefined) {
+      update.scheduled_time = partial.scheduledTime?.toISOString();
+    }
+
+    if (Object.keys(update).length === 0) return dbToPublishRecord(existing);
+    return dbToPublishRecord(db.updatePublishRecord(recordId, update));
+  }
+
   /**
    * 获取统计信息
    */
@@ -401,6 +435,13 @@ export async function listPublishRecords(
   return getManager().listPublishRecords(status, limit, offset);
 }
 
+export async function updatePublishRecord(
+  recordId: string,
+  partial: Partial<PublishRecord>
+): Promise<PublishRecord | null> {
+  return getManager().updatePublishRecord(recordId, partial);
+}
+
 /**
  * 获取统计信息
  */
@@ -433,6 +474,7 @@ export default {
   executePublish,
   getPublishRecord,
   listPublishRecords,
+  updatePublishRecord,
   getPublishStats,
   deletePublishRecord,
   getAuditLog,

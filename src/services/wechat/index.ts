@@ -315,6 +315,10 @@ export async function initWechatClient(
   config: WechatConfig,
   mockMode: boolean = true
 ): Promise<void> {
+  if (!mockMode && (!config.appId.trim() || !config.appSecret.trim())) {
+    throw new Error('WECHAT_APP_ID and WECHAT_APP_SECRET are required in real mode');
+  }
+
   wechatClient = new WechatClient(config, mockMode);
   console.log(
     `✓ WeChat 客户端已初始化${mockMode ? ' (Mock 模式)' : ''}`

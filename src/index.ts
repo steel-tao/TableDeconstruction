@@ -3,7 +3,7 @@
  * @description 应用入口
  */
 
-import Config from './config';
+import Config from './config/index.js';
 
 /**
  * 启动应用

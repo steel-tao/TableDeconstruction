@@ -130,7 +130,7 @@ weixin_url: "https://mp.weixin.qq.com/..."
       const result = parser.validateMetadata(metadata);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(expect.stringContaining('title'));
+      expect(result.errors).toContain('title 字段必需且不能为空字符串');
     });
 
     it('应该拒绝空字符串标题', () => {
@@ -152,19 +152,19 @@ weixin_url: "https://mp.weixin.qq.com/..."
       const result = parser.validateMetadata(metadata);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(expect.stringContaining('weixin_media_id'));
+      expect(result.errors).toContain('published=true 时必须设置 weixin_media_id');
     });
 
     it('应该验证 publish_date 格式', () => {
       const metadata: any = {
         title: '标题',
-        publish_date: '不是日期'
+        publishDate: '不是日期'
       };
 
       const result = parser.validateMetadata(metadata);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(expect.stringContaining('ISO8601'));
+      expect(result.errors).toContain('publish_date 必须为 ISO8601 格式 (YYYY-MM-DD)');
     });
 
     it('应该接受正确格式的 publish_date', () => {
@@ -187,7 +187,7 @@ weixin_url: "https://mp.weixin.qq.com/..."
       const result = parser.validateMetadata(metadata);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(expect.stringContaining('tags'));
+      expect(result.errors).toContain('tags 必须是数组');
     });
   });
 

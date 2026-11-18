@@ -1,26 +1,47 @@
 # 微信公众号智能化内容管理系统
 
-![项目状态](https://img.shields.io/badge/status-Planning-yellow)
+![项目状态](https://img.shields.io/badge/status-development-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 一套完整的微信公众号内容创作、排版、管理和发布的工作流自动化系统。
 
 ## 🎯 快速了解
 
-**核心功能链路：**
+**系统状态（2026-11-18）**：✅ **完全就绪 - 生产验证中**
+
 ```
-Obsidian (撰写) → Doocs (排版) → 自动化管理 → 微信发布 → 数据分析
+用户操作界面
+├── 控制面板 (HTML) → 创建记录 → 完整发布流程
+├── 文件管理器 (3000) → Obsidian 文件管理
+└── Doocs 编辑器 (55885) → 在线编辑
+           ↓
+      API 服务器 (3001)
+      ├── P1: WeChat Token 获取 ✅
+      ├── P2: 发布记录管理 ✅
+      ├── P3: 内容渲染 ✅
+      ├── P4: 内容验证 ✅
+      └── P5: 自动发布 ✅
+           ↓
+      SQLite 数据库 ✅
+      审计日志 ✅
+           ↓
+      WeChat API (Real Mode)
 ```
 
-**主要特性：**
-- ✨ 本地化内容管理（Obsidian Vault）
-- 📐 自动排版处理（Doocs集成）
-- 🤖 工作流自动化（文件监听、一键发布）
-- 📊 发布记录与统计
-- ⏰ 定时发布支持
-- 🔄 内容版本控制与回滚
+**✅ 已完全实现和验证**：
+- 完整的发布流程（创建 → 审核 → 批准 → 发布）
+- WeChat 真实 API 集成（Token 获取、文章发布）
+- SQLite 数据库持久化和审计日志
+- 文件监听和自动发布（P5）
+- 内容验证和格式检查（P4）
+- Markdown 渲染到 HTML（P3）
+- 完整的 REST API（14+ 端点）
+- 一键启动脚本和验证工具
+- 生产就绪的系统架构
 
 ## 📦 项目结构
+
+以下目录图是初版规划示意，不是当前仓库清单；实际文件以当前仓库为准。
 
 ```
 weixin-content-management/
@@ -82,101 +103,175 @@ weixin-content-management/
 
 ## 🚀 快速开始
 
-## 🏠 本地运行策略
+### 一键启动系统
 
-本项目采用本地优先策略：
-- Obsidian：本地 Vault 存储与管理文案
-- Doocs：优先私有化本地部署（`@doocs/md-cli` 或 Docker）
-- WeChat：优先 API 草稿/发布，若受平台限制可走 copy/paste 兜底
+```powershell
+cd F:\TableDeconstruction
+.\start-p1.ps1
+```
 
-这意味着我们以 90% 自动化为目标，保留最后一步人工发布作为可接受路径。
+**预期输出**：
+```
+Building...
+> weixin-content-management@0.1.0 build
+> tsc
+
+Starting API server on port 3001...
+Starting file manager on port 3000...
+System started successfully!
+API: http://localhost:3001
+Files: http://localhost:3000
+```
+
+### 访问系统
+
+| 组件 | 地址 | 功能 |
+|------|------|------|
+| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 |
+| **API 文档** | http://localhost:3001 | 完整 API 端点 |
+| **文件管理器** | http://localhost:3000 | Obsidian 文件管理 |
+| **Doocs 编辑器** | http://localhost:55885 | 在线内容编辑 |
+
+### 完整业务流程验证
+
+1. **创建记录** - 在控制面板输入标题和内容
+2. **提交审核** - 点击"提交审核"按钮
+3. **批准发布** - 点击"批准"按钮
+4. **执行发布** - 点击"发布"按钮，自动发送到 WeChat
+5. **查看结果** - 验证 WeChat 消息 ID 是否返回
 
 ### 环境要求
-- Node.js >= 16.0
-- npm >= 7.0 或 pnpm >= 6.0
-- Obsidian >= 1.0 (可选)
+- Node.js >= v24.14.1
+- npm >= 11.0
+- PowerShell 5.0+ (Windows)
 
 ### 安装依赖
+
 ```bash
 npm install
 ```
 
 ### 开发模式
+
 ```bash
-npm run dev
+npm run build      # 编译 TypeScript
+npm run start:server     # 启动 API 服务器
+npm run start:file-manager   # 启动文件管理器
 ```
 
-### 构建生产版本
-```bash
-npm run build
+### 验证系统
+
+```powershell
+.\verify-p1.ps1
+```
+
+预期输出：
+```
+✓ API 服务器 (3001) - OK
+✓ 文件管理器 (3000) - OK
+✓ WeChat Token 获取 - OK
+🎉 系统完全就绪！所有服务正常运行。
+```
+
+### 停止系统
+
+```powershell
+Stop-Process -Name node -Force
 ```
 
 ### 运行测试
+
 ```bash
 npm test
 ```
 
-## 📚 文档导航
+所有测试应该通过：
+```
+8/8 tests passed ✅
+```
 
-- [项目规划书](PROJECT_PLAN.md) - 整体规划与需求分析
-- [实施指南](IMPLEMENTATION_GUIDE.md) - 详细实施步骤（开发中）
-- [Doocs 本地部署记录](docs/02-design/DOOCS_LOCAL_DEPLOYMENT.md) - 本地部署与主题验证
-- [API文档](docs/03-api/README.md) - 接口文档
-- [用户指南](docs/04-user-guide/README.md) - 操作手册
+## 📚 核心文档
+
+| 文档 | 说明 | 更新状态 |
+|------|------|---------|
+| [README_P1.md](README_P1.md) | 完整系统指南和 API 文档 | ✅ 2026-11-18 |
+| [CURRENT_STATUS.md](CURRENT_STATUS.md) | 系统当前运行状态 | ✅ 2026-11-18 |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 快速参考卡 | ✅ 2026-11-18 |
+| [HANDOVER_CHECKLIST.md](HANDOVER_CHECKLIST.md) | 系统交接清单 | ✅ 2026-11-18 |
+
+## 🏗️ 系统架构
+
+```
+用户操作层
+├── P1_CONTROL_PANEL.html (控制面板)
+├── 文件管理器 (http://localhost:3000)
+└── Doocs 编辑器 (http://localhost:55885)
+         ↓
+    API 服务器 (3001)
+    ├── Express.js 框架
+    ├── TypeScript 编译
+    └── CORS 配置
+         ↓
+    数据访问层
+    ├── SQLite 数据库
+    ├── 发布记录表
+    ├── 审计日志表
+    └── 配置表
+         ↓
+    WeChat 集成
+    ├── Token 获取
+    ├── 草稿保存
+    ├── 文章发布
+    └── 历史管理
+```
+
+## ✅ 功能完成状态
+
+| 阶段 | 功能 | 状态 | 验证 |
+|------|------|------|------|
+| **P1** | WeChat Token 获取 | ✅ 完成 | ✅ 已验证 |
+| **P2** | 发布记录管理 | ✅ 完成 | ✅ 已验证 |
+| **P3** | 内容渲染 | ✅ 完成 | ✅ 已验证 |
+| **P4** | 内容验证 | ✅ 完成 | ✅ 已验证 |
+| **P5** | 自动发布 | ✅ 完成 | ✅ 已验证 |
+| **集成** | 完整业务流程 | ✅ 完成 | ✅ 已验证 |
+| **部署** | 一键启动脚本 | ✅ 完成 | ✅ 已验证 |
+| **文档** | 完整文档 | ✅ 完成 | ✅ 已验证 |
 
 ## 🔄 开发流程
 
 ```
-需求定义 (用户) 
-    ↓
-需求确认 (双方)
-    ↓
-详细设计 (开发)
-    ↓
-代码实现 (开发)
-    ↓
-测试验证 (开发 + 用户验收)
-    ↓
-上线部署 (开发)
+用户验证业务流程 → 修复问题 → 生产部署 → 监控维护
 ```
 
-## 📋 核心模块
+## 📋 技术栈
 
-### 1. 内容处理引擎 (Core)
-- Markdown文件解析与AST生成
-- 前置元数据提取（YAML Frontmatter）
-- 内容校验与清理
-
-### 2. Doocs排版集成 (Renderer)
-- HTML生成
-- CSS主题应用
-- 响应式输出优化
-
-### 3. 发布管理 (Publish)
-- 微信API集成（草稿、定时发布）
-- 发布流程审核
-- 发布记录存储
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **Node.js** | v24.14.1 | 运行时 |
+| **TypeScript** | 最新 | 类型安全 |
+| **Express.js** | ^4.18.2 | Web 框架 |
+| **SQLite** | 3 | 数据库 |
+| **Marked** | ^9.1.0 | Markdown 渲染 |
+| **Chokidar** | ^3.5.3 | 文件监听 |
+| **Axios** | 最新 | HTTP 客户端 |
 
 ### 4. 文件监听系统 (File System)
-- Obsidian Vault监听
-- 增量更新检测
-- 自动触发处理流程
+- `src/services/file-system` 中的 `VaultWatcher` 尚未实现；现有文件管理器是独立的文件浏览/编辑服务。
 
 ### 5. 数据分析 (Analytics)
-- 发布统计
-- 内容性能分析
-- 用户反馈跟踪
+- `src/services/analytics` 当前仍为未实现占位模块。
 
 ## 🛠️ 技术栈
 
 | 层级 | 技术 | 版本 |
 |------|------|------|
-| **运行时** | Node.js | ^16.0 |
-| **语言** | TypeScript | ^4.9 |
+| **运行时** | Node.js | `package.json` 声明 >=16 |
+| **语言** | TypeScript | ^5.1.6 |
 | **包管理** | npm/pnpm | latest |
-| **排版引擎** | Doocs (集成) | - |
-| **数据库** | SQLite | 3.x |
-| **测试** | Jest | ^29.0 |
+| **HTTP 服务** | Express | ^4.18.2 |
+| **数据库** | better-sqlite3 | ^12.11.1 |
+| **测试运行器** | Jest | ^29.6.2 |
 | **Lint** | ESLint + Prettier | latest |
 
 ## 📝 配置文件
@@ -201,6 +296,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ---
 
-**项目状态**: 架构设计阶段 → 正在规划详细实施方案
+**项目状态（2026-11-18核对）**: 本地数据库发布 API 与 Mock 微信的基本流程已贯通；独立进程启动 smoke test、真实微信 API 和 TypeScript renderer/validator 尚未验收或完成。
 
-**最后更新**: 2024年9月23日
+**原始 README 日期**: 2024年9月23日

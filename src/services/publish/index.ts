@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import * as WechatService from '../wechat/index';
+import * as WechatService from '../wechat/index.js';
 
 // ============================================================================
 // 类型定义
@@ -186,6 +186,13 @@ class PublishManager {
     creator?: string,
     filePath?: string
   ): Promise<PublishRecord> {
+    if (!title.trim()) {
+      throw new Error('文章标题不能为空');
+    }
+    if (!content.trim()) {
+      throw new Error('文章内容不能为空');
+    }
+
     return this.store.createRecord(title, content, creator, filePath);
   }
 

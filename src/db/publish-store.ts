@@ -5,7 +5,7 @@
 
 import Database from 'better-sqlite3';
 import path from 'path';
-import { PublishRecord, PublishStatus } from '../services/publish/index';
+import { PublishRecord, PublishStatus } from '../services/publish/index.js';
 
 export interface PublishStoreOptions {
   dbPath?: string;
@@ -143,6 +143,10 @@ export class PublishStore {
     const updates: string[] = [];
     const values: any[] = [];
 
+    if (partial.title !== undefined) {
+      updates.push('title = ?');
+      values.push(partial.title);
+    }
     if (partial.status !== undefined) {
       updates.push('status = ?');
       values.push(partial.status);

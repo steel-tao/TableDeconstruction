@@ -288,6 +288,9 @@
         <button class="btn-primary" id="openInDoocs" disabled>
           🚀 打开到 Doocs
         </button>
+        <button class="btn-primary" id="saveToAPI" disabled>
+          💾 保存到发布 API
+        </button>
         <button class="btn-primary" id="saveFile" disabled>
           💾 保存文件
         </button>
@@ -386,6 +389,7 @@
 
         // 启用按钮
         document.getElementById('openInDoocs').disabled = false;
+        document.getElementById('saveToAPI').disabled = false;
         document.getElementById('saveFile').disabled = false;
         document.getElementById('copyContent').disabled = false;
       } catch (error) {
@@ -396,14 +400,71 @@
     // 打开到 Doocs
     async function openInDoocs() {
       const content = document.getElementById('editor').value;
+      const doocsWindow = window.open(DOOCS_URL, 'doocs');
+
+      try {
+        await navigator.clipboard.writeText(content);
+        showMessage(
+          doocsWindow
+            ? '✅ 内容已复制。请在 Doocs 编辑器中粘贴并检查排版。'
+            : '✅ 内容已复制，但 Doocs 弹窗被拦截；请手动打开 Doocs 并粘贴。',
+          'success'
+        );
+      } catch (error) {
+        showMessage(`❌ 无法访问剪贴板，请手动复制内容: ${error.message}`, 'error');
+      }
+    }
+
+    // 保存到发布 API
+    async function saveToAPI() {
+      const content = document.getElementById('editor').value;
+      const title = currentFile?.name || '未命名文章';
       
-      // 存储到 localStorage，然后打开 Doocs
-      localStorage.setItem('_obsidian_import_content', content);
-      localStorage.setItem('_obsidian_import_filename', currentFile.filename);
-      
-      window.open(DOOCS_URL, 'doocs');
-      
-      alert('✅ 内容已复制到剪贴板！\n\n在 Doocs 中:\n1. 点击编辑器\n2. Ctrl+V 粘贴内容\n3. 验证排版\n4. 点击 Copy 按钮');
+      try {
+        // 第 1 步：创建草稿记录
+        const createRes = await fetch('http://127.0.0.1:3001/api/publish/records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title,
+            content: content,
+            creator: 'file-manager',
+            filePath: currentFile?.filepath
+          })
+        });
+
+        if (!createRes.ok) {
+          showMessage('❌ 创建草稿失败', 'error');
+          return;
+        }
+
+        const createData = await createRes.json();
+        const recordId = createData.data.id;
+
+        // 第 2 步：保存排版内容（HTML + Markdown）
+        const contentRes = await fetch(
+          `http://127.0.0.1:3001/api/publish/records/${recordId}/content`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              htmlContent: `<article>${content.replace(/\n/g, '<br>')}</article>`,
+              markdownContent: content
+            })
+          }
+        );
+
+        if (contentRes.ok) {
+          showMessage(
+            `✅ 已保存到发布 API！\n记录 ID: ${recordId}\n请在浏览器主菜单查看发布状态。`,
+            'success'
+          );
+        } else {
+          showMessage('❌ 保存内容失败', 'error');
+        }
+      } catch (error) {
+        showMessage(`❌ 错误: ${error.message}`, 'error');
+      }
     }
 
     // 保存文件
@@ -458,6 +519,7 @@
 
     // 事件监听
     document.getElementById('openInDoocs').onclick = openInDoocs;
+    document.getElementById('saveToAPI').onclick = saveToAPI;
     document.getElementById('saveFile').onclick = saveFile;
     document.getElementById('copyContent').onclick = copyContent;
 

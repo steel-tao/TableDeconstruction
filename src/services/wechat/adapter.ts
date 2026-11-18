@@ -13,7 +13,7 @@
  * 3. 业务代码无需改动
  */
 
-import { WechatConfig, DraftArticle, PublishOptions } from './index';
+import { WechatConfig, DraftArticle, PublishOptions } from './index.js';
 
 // ============================================================================
 // 适配器接口定义
@@ -63,6 +63,12 @@ export interface IWechatAdapter {
 export class MockWechatAdapter implements IWechatAdapter {
   private config: WechatConfig | null = null;
   private mockToken: string = '';
+  private idCounter = 0;
+
+  private nextMockId(prefix: string): string {
+    this.idCounter += 1;
+    return `${prefix}_${Date.now()}_${this.idCounter}`;
+  }
 
   async init(config: WechatConfig): Promise<void> {
     this.config = config;
@@ -78,7 +84,7 @@ export class MockWechatAdapter implements IWechatAdapter {
   }
 
   async saveDraft(article: DraftArticle): Promise<string> {
-    const mediaId = `mock_media_id_${Date.now()}`;
+    const mediaId = this.nextMockId('mock_media_id');
     console.log(`[Mock] 保存草稿: ${article.title} -> ${mediaId}`);
     return mediaId;
   }
@@ -87,7 +93,7 @@ export class MockWechatAdapter implements IWechatAdapter {
     article: DraftArticle,
     options?: PublishOptions
   ): Promise<string> {
-    const msgId = `mock_msg_id_${Date.now()}`;
+    const msgId = this.nextMockId('mock_msg_id');
     console.log(
       `[Mock] 发布文章: ${article.title} -> ${msgId}${
         options?.publish_time ? ` (定时: ${new Date(options.publish_time * 1000).toISOString()})` : ''
@@ -128,6 +134,10 @@ export class RealWechatAdapter implements IWechatAdapter {
   private readonly API_BASE = 'https://api.weixin.qq.com';
 
   async init(config: WechatConfig): Promise<void> {
+    if (!config.appId || !config.appSecret) {
+      throw new Error('WeChat appId and appSecret are required');
+    }
+
     this.config = config;
     console.log(
       `✓ 真实 WeChat 适配器已初始化 (AppID: ${config.appId.substring(0, 5)}***)`
