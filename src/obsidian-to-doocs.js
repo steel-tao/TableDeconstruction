@@ -18,7 +18,7 @@ import readline from 'readline';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VAULT_PATH = 'G:\\Obsidian\\wechat\\桌面解构';
-const DOOCS_URL = 'http://127.0.0.1:55885';
+const DOOCS_URL = 'http://127.0.0.1:8800';
 
 // 问题包装函数
 function ask(question) {

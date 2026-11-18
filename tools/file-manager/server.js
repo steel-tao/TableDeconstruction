@@ -125,6 +125,6 @@ app.listen(PORT, '127.0.0.1', () => {
   console.log(`\n📁 文件管理器已启动`);
   console.log(`📂 Vault 路径: ${VAULT_PATH}`);
   console.log(`🌐 访问地址: http://127.0.0.1:${PORT}`);
-  console.log(`\n📝 Doocs 编辑器: http://127.0.0.1:55885`);
+  console.log(`\n[DOOCS]   Doocs 编辑器: http://127.0.0.1:8800`);
   console.log(`\n`);
 });

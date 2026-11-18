@@ -247,7 +247,7 @@ async function step6_PublishPreview(prepared) {
 
   console.log('🚀 下一步操作:');
   console.log('─'.repeat(60));
-  console.log('1. 打开 Doocs: http://127.0.0.1:55885');
+  console.log('1. 打开 Doocs: http://127.0.0.1:8800');
   console.log('2. 复制上方文章内容到 Markdown 编辑器');
   console.log('3. 验证预览效果');
   console.log('4. 点击 Copy 按钮');

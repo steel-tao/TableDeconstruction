@@ -210,7 +210,7 @@ npm test
 用户操作层
 ├── P1_CONTROL_PANEL.html (控制面板)
 ├── 文件管理器 (http://localhost:3000)
-└── Doocs 编辑器 (http://localhost:55885)
+└── Doocs 编辑器 (http://127.0.0.1:8800)
          ↓
     API 服务器 (3001)
     ├── Express.js 框架

@@ -35,7 +35,7 @@ doocProcess.stderr.on('data', (data) => {
 });
 
 // 创建代理服务器
-const proxyPort = 55885;
+const proxyPort = 8800; // 使用与 Doocs CLI 相同的端口
 const proxyServer = http.createServer((req, res) => {
   // 代理请求到实际的 Doocs
   const options = {

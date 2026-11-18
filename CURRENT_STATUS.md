@@ -29,7 +29,7 @@
 |------|------|------|------|
 | **API 文档** | http://localhost:3001 | ✅ 运行中 | Express API 服务器 |
 | **文件管理器** | http://localhost:3000 | ✅ 运行中 | Obsidian 文件管理 |
-| **Doocs 编辑器** | http://localhost:55885 | ⚠️ 未启动 | 可选组件（需单独部署）|
+| **Doocs 编辑器** | http://localhost:8800 | ✅ 运行中 | WeChat 排版编辑 |
 | **控制面板** | P1_CONTROL_PANEL.html | ✅ 就绪 | 本地 HTML 界面 |
 
 ---
@@ -151,7 +151,7 @@ Stop-Process -Name node -Force
 ```
 PORT: 3001 (API 服务器) ✅ 运行中
 PORT: 3000 (文件管理器) ✅ 运行中
-PORT: 55885 (Doocs 编辑器) ⚠️ 可选（需单独部署）
+PORT: 8800 (Doocs 编辑器) ✅ 运行中
 DATABASE: ./db.sqlite ✅ 已初始化
 WECHAT_MODE: real ✅ 配置完成
 ```
