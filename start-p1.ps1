@@ -2,6 +2,24 @@ param(
     [string]$Mode = 'full'
 )
 
+# ============================================================================
+# 清理占用的端口
+# ============================================================================
+Write-Host "Cleaning up ports..." -ForegroundColor Yellow
+$portsToClean = @(3001, 3000, 8800)
+foreach ($port in $portsToClean) {
+    $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+    if ($connection) {
+        $process = Get-Process -Id $connection.OwningProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            Write-Host "  Killing process on port $port (PID: $($process.Id))" -ForegroundColor Gray
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Milliseconds 500
+        }
+    }
+}
+
+Write-Host ""
 Write-Host "Starting TableDeconstruction P1 with Doocs Integration..." -ForegroundColor Green
 
 Write-Host "Building..."
@@ -16,10 +34,10 @@ if (-not (Test-Path $doocsDepsPath)) {
     Write-Host "Installing Doocs dependencies..." -ForegroundColor Yellow
     npm install --prefix tools/doocs
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️  Doocs installation failed, continuing without Doocs..." -ForegroundColor Yellow
+        Write-Host "[WARN] Doocs installation failed, continuing without Doocs..." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "✓ Doocs dependencies ready" -ForegroundColor Green
+    Write-Host "[OK] Doocs dependencies ready" -ForegroundColor Green
 }
 
 # ============================================================================
@@ -52,13 +70,14 @@ if ($Mode -eq 'full' -or $Mode -eq 'files') {
     Start-Sleep -Seconds 2
 }
 
+Write-Host ""
 Write-Host "System started successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Services:" -ForegroundColor Cyan
-Write-Host "  📝 Doocs Editor: http://127.0.0.1:8800"
-Write-Host "  🔗 API Server: http://127.0.0.1:3001"
-Write-Host "  📁 File Manager: http://127.0.0.1:3000"
-Write-Host "  🎛️  Control Panel: file:///$((Get-Location).Path)/P1_CONTROL_PANEL.html"
+Write-Host "  [DOOCS]   Doocs Editor:    http://127.0.0.1:8800"
+Write-Host "  [API]     API Server:      http://127.0.0.1:3001"
+Write-Host "  [FILES]   File Manager:    http://127.0.0.1:3000"
+Write-Host "  [PANEL]   Control Panel:   file:///$((Get-Location).Path)/P1_CONTROL_PANEL.html"
 Write-Host ""
 Write-Host "To stop: Stop-Process -Name node -Force" -ForegroundColor Yellow
 
