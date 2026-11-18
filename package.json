@@ -30,7 +30,10 @@
     "vault:stats": "node src/cli.js stats",
     "vault:export": "node src/cli.js export",
     "workflow:demo": "node src/e2e-workflow.js",
-    "workflow:start": "node src/e2e-workflow.js"
+    "workflow:start": "node src/e2e-workflow.js",
+    "test:wechat-api": "node scripts/test-wechat-api.cjs",
+    "test:wechat-mock": "WECHAT_ADAPTER=mock node scripts/test-wechat-api.cjs",
+    "test:publish-flow": "jest src/services/publish --coverage"
   },
   "keywords": [
     "wechat",
