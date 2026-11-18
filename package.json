@@ -1,6 +1,7 @@
 {
   "name": "weixin-content-management",
   "version": "0.1.0",
+  "type": "module",
   "description": "微信公众号智能化内容管理与发布系统",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,8 +19,18 @@
     "prepare": "npm run build",
     "setup": "node scripts/setup.js",
     "dev:watch": "node scripts/dev-server.js",
+    "start-all": "node scripts/start-all-services.cjs",
+    "start:file-manager": "node tools/file-manager/start.cjs",
+    "start:doocs": "node tools/doocs/start.cjs",
     "doocs:install": "npm install --prefix tools/doocs @doocs/md-cli",
-    "doocs:start": "node tools/doocs/node_modules/@doocs/md-cli/index.js --port 8899"
+    "doocs:start": "node tools/doocs/node_modules/@doocs/md-cli/index.js --port 8899",
+    "vault:list": "node src/cli.js list",
+    "vault:extract": "node src/cli.js extract",
+    "vault:search": "node src/cli.js search",
+    "vault:stats": "node src/cli.js stats",
+    "vault:export": "node src/cli.js export",
+    "workflow:demo": "node src/e2e-workflow.js",
+    "workflow:start": "node src/e2e-workflow.js"
   },
   "keywords": [
     "wechat",

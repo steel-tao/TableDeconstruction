@@ -1,0 +1,14 @@
+{
+  "name": "obsidian-file-manager",
+  "version": "1.0.0",
+  "description": "File manager for Obsidian vault with Doocs integration",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node start.cjs",
+    "dev": "node start.cjs"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

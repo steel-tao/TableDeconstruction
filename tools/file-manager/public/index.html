@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obsidian 文件管理器 | 打开到 Doocs</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1400px;
+      height: 80vh;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      background: #f8f9fa;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .series-group {
+      margin-bottom: 15px;
+    }
+
+    .series-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #667eea;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      margin: 3px 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .file-item:hover {
+      background: #e3f2fd;
+      border-color: #667eea;
+      transform: translateX(4px);
+    }
+
+    .file-item.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .file-name {
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .file-meta {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    /* 主编辑区 */
+    .main {
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+
+    .editor-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #fafafa;
+    }
+
+    .file-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .file-stats {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .editor-toolbar {
+      padding: 15px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+      background: white;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+
+    .editor-content {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+    }
+
+    #editor {
+      flex: 1;
+      padding: 20px;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      border: none;
+      outline: none;
+      resize: none;
+    }
+
+    .no-file {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 16px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #667eea;
+      font-size: 14px;
+    }
+
+    .success {
+      background: #4caf50;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .error {
+      background: #f44336;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .sidebar {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">📁 Obsidian 文件</div>
+        <div class="sidebar-subtitle">点击打开文件</div>
+      </div>
+      <div class="file-list" id="fileList">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+
+    <!-- 主编辑区 -->
+    <div class="main">
+      <div class="editor-header">
+        <div class="file-title" id="fileTitle">选择一个文件开始编辑</div>
+        <div class="file-stats" id="fileStats" style="display: none;">
+          <div class="stat">📝 <span id="wordCount">0</span> 字</div>
+          <div class="stat">⏱️ <span id="readTime">0</span> 分钟</div>
+          <div class="stat">📅 <span id="modifiedTime">-</span></div>
+        </div>
+      </div>
+
+      <div class="editor-toolbar">
+        <button class="btn-primary" id="openInDoocs" disabled>
+          🚀 打开到 Doocs
+        </button>
+        <button class="btn-primary" id="saveFile" disabled>
+          💾 保存文件
+        </button>
+        <button class="btn-secondary" id="copyContent" disabled>
+          📋 复制内容
+        </button>
+      </div>
+
+      <div class="editor-content">
+        <textarea id="editor" placeholder="选择左侧文件进行编辑..." disabled></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const VAULT_API = 'http://127.0.0.1:3000/api';
+    const DOOCS_URL = 'http://127.0.0.1:55885';
+
+    let currentFile = null;
+    let currentContent = '';
+
+    // 加载文件列表
+    async function loadFiles() {
+      try {
+        const response = await fetch(`${VAULT_API}/files`);
+        const data = await response.json();
+        renderFileList(data.files);
+      } catch (error) {
+        document.getElementById('fileList').innerHTML = `<div class="error">❌ 加载失败: ${error.message}</div>`;
+      }
+    }
+
+    // 渲染文件列表
+    function renderFileList(files) {
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+
+      // 按系列分组
+      const grouped = {};
+      files.forEach(file => {
+        const series = file.series || '(无系列)';
+        if (!grouped[series]) {
+          grouped[series] = [];
+        }
+        grouped[series].push(file);
+      });
+
+      // 渲染每个系列
+      Object.entries(grouped).forEach(([series, seriesFiles]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'series-group';
+
+        const seriesTitle = document.createElement('div');
+        seriesTitle.className = 'series-name';
+        seriesTitle.textContent = `📚 ${series} (${seriesFiles.length})`;
+        groupDiv.appendChild(seriesTitle);
+
+        seriesFiles.forEach(file => {
+          const fileDiv = document.createElement('div');
+          fileDiv.className = 'file-item';
+          fileDiv.innerHTML = `
+            <div class="file-name">${file.filename}</div>
+            <div class="file-meta">${file.wordCount} 字</div>
+          `;
+          fileDiv.onclick = () => openFile(file);
+          groupDiv.appendChild(fileDiv);
+        });
+
+        fileList.appendChild(groupDiv);
+      });
+    }
+
+    // 打开文件
+    async function openFile(file) {
+      try {
+        document.getElementById('fileList').querySelectorAll('.file-item').forEach(el => {
+          el.classList.remove('active');
+        });
+        event.target.closest('.file-item').classList.add('active');
+
+        const response = await fetch(`${VAULT_API}/file/${encodeURIComponent(file.filename)}`);
+        const data = await response.json();
+
+        currentFile = data;
+        currentContent = data.content;
+
+        // 更新编辑器
+        document.getElementById('editor').value = currentContent;
+        document.getElementById('editor').disabled = false;
+
+        // 更新文件信息
+        document.getElementById('fileTitle').textContent = `📄 ${file.filename}`;
+        document.getElementById('wordCount').textContent = data.wordCount;
+        document.getElementById('readTime').textContent = Math.ceil(data.wordCount / 200);
+        document.getElementById('fileStats').style.display = 'flex';
+
+        // 启用按钮
+        document.getElementById('openInDoocs').disabled = false;
+        document.getElementById('saveFile').disabled = false;
+        document.getElementById('copyContent').disabled = false;
+      } catch (error) {
+        alert(`❌ 打开文件失败: ${error.message}`);
+      }
+    }
+
+    // 打开到 Doocs
+    async function openInDoocs() {
+      const content = document.getElementById('editor').value;
+      
+      // 存储到 localStorage，然后打开 Doocs
+      localStorage.setItem('_obsidian_import_content', content);
+      localStorage.setItem('_obsidian_import_filename', currentFile.filename);
+      
+      window.open(DOOCS_URL, 'doocs');
+      
+      alert('✅ 内容已复制到剪贴板！\n\n在 Doocs 中:\n1. 点击编辑器\n2. Ctrl+V 粘贴内容\n3. 验证排版\n4. 点击 Copy 按钮');
+    }
+
+    // 保存文件
+    async function saveFile() {
+      const content = document.getElementById('editor').value;
+      
+      try {
+        const response = await fetch(`${VAULT_API}/file/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filepath: currentFile.filepath,
+            content: content
+          })
+        });
+
+        if (response.ok) {
+          currentContent = content;
+          showMessage('✅ 文件已保存成功！', 'success');
+        } else {
+          showMessage('❌ 保存失败', 'error');
+        }
+      } catch (error) {
+        showMessage(`❌ 错误: ${error.message}`, 'error');
+      }
+    }
+
+    // 复制内容
+    function copyContent() {
+      const content = document.getElementById('editor').value;
+      navigator.clipboard.writeText(content).then(() => {
+        showMessage('✅ 内容已复制到剪贴板！', 'success');
+      });
+    }
+
+    // 显示消息
+    function showMessage(message, type) {
+      const toolbar = document.querySelector('.editor-toolbar');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = type;
+      messageDiv.textContent = message;
+      messageDiv.style.position = 'fixed';
+      messageDiv.style.top = '20px';
+      messageDiv.style.right = '20px';
+      messageDiv.style.zIndex = '9999';
+      messageDiv.style.minWidth = '300px';
+      messageDiv.style.textAlign = 'center';
+      
+      document.body.appendChild(messageDiv);
+      setTimeout(() => messageDiv.remove(), 3000);
+    }
+
+    // 事件监听
+    document.getElementById('openInDoocs').onclick = openInDoocs;
+    document.getElementById('saveFile').onclick = saveFile;
+    document.getElementById('copyContent').onclick = copyContent;
+
+    // 初始化
+    loadFiles();
+  </script>
+</body>
+</html>
