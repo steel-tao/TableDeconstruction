@@ -25,12 +25,12 @@ const { startServer } = await import('./dist/server.js');
 
 // 配置
 const config = {
-  port: parseInt(process.env.PORT || '3000'),
-  host: process.env.HOST || 'localhost',
-  dbPath: process.env.DB_PATH || path.join(__dirname, 'data', 'db.sqlite'),
-  env: process.env.NODE_ENV || 'development',
-  wechatMode: process.env.WECHAT_ADAPTER || 'mock',
-  corsOrigin: process.env.CORS_ORIGIN,
+  port: parseInt(process.env.PORT || '3001'),
+  host: process.env.HOST || '127.0.0.1',
+  dbPath: process.env.DB_PATH || path.join(__dirname, 'db.sqlite'),
+  env: process.env.NODE_ENV || 'production',
+  wechatMode: process.env.WECHAT_ADAPTER || 'real',
+  corsOrigin: process.env.CORS_ORIGIN || 'http://127.0.0.1:3000',
 };
 
 console.log('📋 服务器配置:', config);
