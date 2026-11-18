@@ -107,10 +107,12 @@ async function startDoocsCli(maxRetries = 3) {
     try {
       Logger.info(`启动 Doocs CLI (端口: ${cliPort})...`);
 
-      const cli = spawn('npm', ['start'], {
+      const cli = spawn('node', [
+        path.join(__dirname, 'node_modules/@doocs/md-cli/index.js'),
+        '--port', cliPort.toString()
+      ], {
         cwd: path.join(__dirname, 'node_modules/@doocs/md-cli'),
         stdio: 'pipe',
-        shell: true,
       });
 
       let isReady = false;

@@ -1,7 +1,8 @@
 {
   "scripts": {
-    "start": "node start-integrated.cjs",
-    "dev": "node start-integrated.cjs"
+    "start": "node start-prod.mjs",
+    "dev": "node start-prod.mjs",
+    "start:raw": "node start.cjs"
   },
   "dependencies": {
     "@doocs/md-cli": "^2.1.3"
