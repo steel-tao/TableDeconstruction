@@ -1,4 +1,4 @@
-# ✅ P1 系统 - 当前运行状态 (2026-11-18 16:15)
+# ✅ P1 系统 - 当前运行状态 (2026-11-18 16:20)
 
 ## 🚀 系统启动成功
 
@@ -12,24 +12,25 @@
 
 | 进程 | PID | 内存占用 | 功能 |
 |------|-----|---------|------|
-| node | 924 | 62.48 MB | API 服务器 (3001) |
-| node | 41240 | 53.83 MB | 文件管理器 (3000) |
-| node | 42344 | 49.74 MB | Doocs 编辑器 (55885) |
-| node | 54768 | 47.04 MB | WeChat 适配器 |
-| node | 67400 | 47.73 MB | 数据库服务 |
+| node | 924 | 63.33 MB | API 服务器 (3001) |
+| node | 41240 | 56.83 MB | 文件管理器 (3000) |
+| node | 42344 | 49.83 MB | 自动发布服务 |
+| node | 54768 | 47.12 MB | 数据库/WeChat 服务 |
+| node | 67400 | 47.82 MB | 其他后台服务 |
 
-**总内存占用**: ~260 MB
+**总内存占用**: ~265 MB  
+**监听端口**: 3000, 3001
 
 ---
 
 ## 🌐 访问地址
 
-| 服务 | 地址 | 状态 |
-|------|------|------|
-| **API 文档** | http://localhost:3001 | ✅ 运行中 |
-| **文件管理器** | http://localhost:3000 | ✅ 运行中 |
-| **Doocs 编辑器** | http://localhost:55885 | ✅ 运行中 |
-| **控制面板** | file:///F:/TableDeconstruction/P1_CONTROL_PANEL.html | ✅ 就绪 |
+| 服务 | 地址 | 状态 | 说明 |
+|------|------|------|------|
+| **API 文档** | http://localhost:3001 | ✅ 运行中 | Express API 服务器 |
+| **文件管理器** | http://localhost:3000 | ✅ 运行中 | Obsidian 文件管理 |
+| **Doocs 编辑器** | http://localhost:55885 | ⚠️ 未启动 | 可选组件（需单独部署）|
+| **控制面板** | P1_CONTROL_PANEL.html | ✅ 就绪 | 本地 HTML 界面 |
 
 ---
 
@@ -148,12 +149,32 @@ Stop-Process -Name node -Force
 
 **关键配置**:
 ```
-PORT: 3001 (API)
-PORT: 3000 (文件管理器)
-PORT: 55885 (Doocs 编辑器)
-DATABASE: ./db.sqlite
-WECHAT_MODE: real (或 mock 用于测试)
+PORT: 3001 (API 服务器) ✅ 运行中
+PORT: 3000 (文件管理器) ✅ 运行中
+PORT: 55885 (Doocs 编辑器) ⚠️ 可选（需单独部署）
+DATABASE: ./db.sqlite ✅ 已初始化
+WECHAT_MODE: real ✅ 配置完成
 ```
+
+---
+
+## ⚠️ Doocs 编辑器说明
+
+**当前状态**: 未启动（可选组件）
+
+Doocs 编辑器是可选的 Web 排版工具。系统提供以下两种方式：
+
+**方式 1 - 文件管理器中使用**:
+1. 在文件管理器（3000）中打开文件
+2. 内容会被复制到剪贴板
+3. 粘贴到外部 Doocs（如 https://doocs.qiniu.com）进行排版
+4. 排版完成后保存
+
+**方式 2 - 本地 Doocs（可选）**:
+- 需要单独安装和启动 Doocs
+- 命令: `npx @doocs/md-cli` 或 Docker 部署
+- 访问: http://localhost:55885
+- 目前系统启动脚本中暂未集成本地 Doocs
 
 ---
 
@@ -168,6 +189,15 @@ WECHAT_MODE: real (或 mock 用于测试)
 - **原因**: 后台 Job 仍在运行
 - **解决**: 使用 `Stop-Process -Name node -Force` 强制停止
 - **状态**: 已确认此为正常行为
+
+### Doocs 编辑器未启动（55885）
+- **原因**: 本地 Doocs 是可选组件，启动脚本中暂未集成
+- **影响**: 文件仍可编辑，只是不能在本地使用 Doocs 排版工具
+- **解决方案**:
+  - 方案 A: 在文件管理器复制内容，粘贴到在线 Doocs (https://doocs.qiniu.com)
+  - 方案 B: 单独部署本地 Doocs (`npx @doocs/md-cli`)
+  - 方案 C: 使用 Docker: `docker run -p 55885:55885 geekdada/doocs`
+- **优先级**: 低（系统主要功能不受影响）
 
 ---
 

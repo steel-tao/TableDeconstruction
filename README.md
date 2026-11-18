@@ -13,7 +13,7 @@
 用户操作界面
 ├── 控制面板 (HTML) → 创建记录 → 完整发布流程
 ├── 文件管理器 (3000) → Obsidian 文件管理
-└── Doocs 编辑器 (55885) → 在线编辑
+└── Doocs 编辑器 (可选) → 在线排版
            ↓
       API 服务器 (3001)
       ├── P1: WeChat Token 获取 ✅
@@ -125,12 +125,17 @@ Files: http://localhost:3000
 
 ### 访问系统
 
-| 组件 | 地址 | 功能 |
-|------|------|------|
-| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 |
-| **API 文档** | http://localhost:3001 | 完整 API 端点 |
-| **文件管理器** | http://localhost:3000 | Obsidian 文件管理 |
-| **Doocs 编辑器** | http://localhost:55885 | 在线内容编辑 |
+| 组件 | 地址 | 功能 | 状态 |
+|------|------|------|------|
+| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 | ✅ 运行中 |
+| **API 文档** | http://localhost:3001 | 完整 API 端点 | ✅ 运行中 |
+| **文件管理器** | http://localhost:3000 | Obsidian 文件管理 | ✅ 运行中 |
+| **Doocs 编辑器** | 可选部署 | 在线内容排版 | ⚠️ 未启动 |
+
+**Doocs 编辑器说明**:
+- 当前系统已实现完整的文件管理和发布流程，不依赖本地 Doocs
+- 文件可以在文件管理器中复制，粘贴到外部 Doocs (https://doocs.qiniu.com) 进行排版
+- 如需本地 Doocs，可单独部署: `npx @doocs/md-cli`
 
 ### 完整业务流程验证
 
