@@ -165,7 +165,7 @@ export class RealWechatAdapter implements IWechatAdapter {
       this.tokenExpireAt = Date.now() + (data.expires_in - 300) * 1000;
 
       console.log('✓ 已获取真实 Access Token');
-      return this.accessToken;
+      return this.accessToken!;
     } catch (error) {
       throw new Error(`WeChat API 错误: ${error}`);
     }
