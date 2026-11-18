@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obsidian 文件管理器 | 打开到 Doocs</title>
+  <title>P1 文章编辑系统 | Doocs 集成</title>
   <style>
     * {
       margin: 0;
@@ -23,18 +23,18 @@
 
     .container {
       display: grid;
-      grid-template-columns: 350px 1fr;
+      grid-template-columns: 320px 1fr;
       gap: 20px;
       width: 100%;
-      max-width: 1400px;
-      height: 80vh;
+      max-width: 1600px;
+      height: 90vh;
       background: white;
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       overflow: hidden;
     }
 
-    /* 侧边栏 */
+    /* ==================== 侧边栏 ==================== */
     .sidebar {
       background: #f8f9fa;
       border-right: 1px solid #e0e0e0;
@@ -81,6 +81,11 @@
       background: #f0f0f0;
       border-radius: 4px;
       margin-bottom: 5px;
+      transition: all 0.2s;
+    }
+
+    .series-name:hover {
+      background: #e3e8f0;
     }
 
     .file-item {
@@ -117,56 +122,66 @@
       opacity: 0.7;
     }
 
-    /* 主编辑区 */
+    /* ==================== 主编辑区 ==================== */
     .main {
       display: flex;
       flex-direction: column;
       background: white;
+      overflow: hidden;
     }
 
     .editor-header {
-      padding: 20px;
+      padding: 15px 20px;
       border-bottom: 1px solid #e0e0e0;
       background: #fafafa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .file-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       color: #333;
-      margin-bottom: 8px;
     }
 
     .file-stats {
       display: flex;
       gap: 20px;
-      font-size: 13px;
+      font-size: 12px;
       color: #666;
     }
 
     .stat {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .editor-toolbar {
-      padding: 15px 20px;
+      padding: 12px 20px;
       border-bottom: 1px solid #e0e0e0;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       background: white;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     button {
-      padding: 8px 16px;
+      padding: 8px 14px;
       border: none;
       border-radius: 6px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .btn-primary {
@@ -174,7 +189,7 @@
       color: white;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       background: #5568d3;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
@@ -186,66 +201,172 @@
       border: 1px solid #e0e0e0;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background: #e0e0e0;
     }
 
-    .btn-danger {
-      background: #f44336;
+    .btn-toggle {
+      background: #fff9c4;
+      color: #f57f17;
+      border: 1px solid #fbc02d;
+      font-size: 11px;
+      padding: 6px 12px;
+    }
+
+    .btn-toggle.active {
+      background: #fbc02d;
       color: white;
     }
 
-    .btn-danger:hover {
-      background: #d32f2f;
+    .btn-toggle:hover:not(:disabled) {
+      background: #fbc02d;
+      color: white;
     }
 
-    .editor-content {
+    /* ==================== 编辑区容器 ==================== */
+    .editor-container {
       flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #e0e0e0;
       overflow: hidden;
+    }
+
+    .editor-container.full-editor {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-container.full-preview {
+      grid-template-columns: 1fr;
+    }
+
+    /* 编辑器面板 */
+    .editor-panel {
+      background: white;
       display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-panel.hidden {
+      display: none;
+    }
+
+    .editor-panel-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f5f5f5;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
     }
 
     #editor {
       flex: 1;
-      padding: 20px;
+      padding: 15px;
       font-family: 'Fira Code', 'Courier New', monospace;
       font-size: 13px;
       line-height: 1.6;
       border: none;
       outline: none;
       resize: none;
+      background: white;
+      color: #333;
     }
 
-    .no-file {
+    #editor::placeholder {
+      color: #ccc;
+    }
+
+    /* Doocs 预览面板 */
+    .preview-panel {
+      background: white;
       display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .preview-panel.hidden {
+      display: none;
+    }
+
+    #doocsFrame {
+      flex: 1;
+      border: none;
+      background: white;
+    }
+
+    .preview-panel-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f5f5f5;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
+    }
+
+    .preview-status {
+      font-size: 11px;
       color: #999;
-      font-size: 16px;
     }
 
-    .loading {
-      text-align: center;
-      color: #667eea;
-      font-size: 14px;
+    /* ==================== 消息提示 ==================== */
+    .message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
     }
 
-    .success {
+    .message.success {
       background: #4caf50;
       color: white;
-      padding: 10px 15px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      font-size: 13px;
     }
 
-    .error {
+    .message.error {
       background: #f44336;
       color: white;
-      padding: 10px 15px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      font-size: 13px;
+    }
+
+    .message.info {
+      background: #2196f3;
+      color: white;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* ==================== 响应式 ==================== */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 280px 1fr;
+      }
+
+      .editor-container {
+        grid-template-columns: 1fr;
+      }
+
+      .editor-panel.hidden,
+      .preview-panel.hidden {
+        display: none;
+      }
     }
 
     @media (max-width: 900px) {
@@ -255,18 +376,27 @@
       }
 
       .sidebar {
-        max-height: 300px;
+        max-height: 250px;
+      }
+
+      .editor-toolbar {
+        gap: 6px;
+      }
+
+      button {
+        padding: 6px 10px;
+        font-size: 11px;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 侧边栏 -->
+    <!-- 侧边栏 - 文件列表 -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-title">📁 Obsidian 文件</div>
-        <div class="sidebar-subtitle">点击打开文件</div>
+        <div class="sidebar-title">📁 文章库</div>
+        <div class="sidebar-subtitle">选择文章编辑</div>
       </div>
       <div class="file-list" id="fileList">
         <div class="loading">加载中...</div>
@@ -275,44 +405,93 @@
 
     <!-- 主编辑区 -->
     <div class="main">
+      <!-- 顶部: 文件信息 + 操作按钮 -->
       <div class="editor-header">
-        <div class="file-title" id="fileTitle">选择一个文件开始编辑</div>
-        <div class="file-stats" id="fileStats" style="display: none;">
-          <div class="stat">📝 <span id="wordCount">0</span> 字</div>
-          <div class="stat">⏱️ <span id="readTime">0</span> 分钟</div>
-          <div class="stat">📅 <span id="modifiedTime">-</span></div>
+        <div>
+          <div class="file-title" id="fileTitle">📄 选择一个文件开始编辑</div>
+          <div class="file-stats" id="fileStats" style="display: none;">
+            <div class="stat">📝 <span id="wordCount">0</span> 字</div>
+            <div class="stat">⏱️ <span id="readTime">0</span> 分</div>
+            <div class="stat">📅 <span id="modifiedTime">-</span></div>
+          </div>
         </div>
       </div>
 
+      <!-- 工具栏 -->
       <div class="editor-toolbar">
-        <button class="btn-primary" id="openInDoocs" disabled>
-          🚀 打开到 Doocs
+        <!-- 业务操作按钮 -->
+        <button class="btn-primary" id="saveToAPI" disabled title="保存到发布 API">
+          💾 保存发布
         </button>
-        <button class="btn-primary" id="saveToAPI" disabled>
-          💾 保存到发布 API
+        <button class="btn-primary" id="saveFile" disabled title="保存到文件">
+          🔒 保存文件
         </button>
-        <button class="btn-primary" id="saveFile" disabled>
-          💾 保存文件
+        <button class="btn-secondary" id="copyContent" disabled title="复制内容到剪贴板">
+          📋 复制
         </button>
-        <button class="btn-secondary" id="copyContent" disabled>
-          📋 复制内容
-        </button>
+
+        <!-- 视图切换按钮 -->
+        <div style="margin-left: auto; display: flex; gap: 6px;">
+          <button class="btn-toggle active" id="toggleEditor" title="显示/隐藏编辑器">
+            ✏️ 编辑器
+          </button>
+          <button class="btn-toggle active" id="togglePreview" title="显示/隐藏预览">
+            👁️ 预览
+          </button>
+        </div>
       </div>
 
-      <div class="editor-content">
-        <textarea id="editor" placeholder="选择左侧文件进行编辑..." disabled></textarea>
+      <!-- 编辑区 & Doocs 预览 -->
+      <div class="editor-container" id="editorContainer">
+        <!-- 左侧: Markdown 编辑器 -->
+        <div class="editor-panel" id="editorPanel">
+          <div class="editor-panel-header">📝 Markdown 源码编辑</div>
+          <textarea
+            id="editor"
+            placeholder="选择左侧文件进行编辑..."
+            disabled
+          ></textarea>
+        </div>
+
+        <!-- 右侧: Doocs 实时预览（嵌入 iframe） -->
+        <div class="preview-panel" id="previewPanel">
+          <div class="preview-panel-header">
+            <span>🎨 Doocs 实时排版预览</span>
+            <span class="preview-status" id="previewStatus">已连接 (8800)</span>
+          </div>
+          <iframe
+            id="doocsFrame"
+            title="实时排版预览"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+          ></iframe>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // ==================== 配置 ====================
     const VAULT_API = 'http://127.0.0.1:3000/api';
+    const PUBLISH_API = 'http://127.0.0.1:3001/api';
     const DOOCS_URL = 'http://127.0.0.1:8800';
 
+    // ==================== 状态管理 ====================
     let currentFile = null;
     let currentContent = '';
+    let editorVisible = true;
+    let previewVisible = true;
+    let doocsReady = false;
 
-    // 加载文件列表
+    // ==================== 消息提示 ====================
+    function showMessage(message, type = 'info') {
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+      msg.textContent = message;
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 3000);
+    }
+
+    // ==================== 文件管理 ====================
     async function loadFiles() {
       try {
         const response = await fetch(`${VAULT_API}/files`);
@@ -323,22 +502,17 @@
       }
     }
 
-    // 渲染文件列表
     function renderFileList(files) {
       const fileList = document.getElementById('fileList');
       fileList.innerHTML = '';
 
-      // 按系列分组
       const grouped = {};
       files.forEach(file => {
         const series = file.series || '(无系列)';
-        if (!grouped[series]) {
-          grouped[series] = [];
-        }
+        if (!grouped[series]) grouped[series] = [];
         grouped[series].push(file);
       });
 
-      // 渲染每个系列
       Object.entries(grouped).forEach(([series, seriesFiles]) => {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'series-group';
@@ -363,14 +537,15 @@
       });
     }
 
-    // 打开文件
     async function openFile(file) {
       try {
-        document.getElementById('fileList').querySelectorAll('.file-item').forEach(el => {
+        // 更新高亮
+        document.querySelectorAll('.file-item').forEach(el => {
           el.classList.remove('active');
         });
         event.target.closest('.file-item').classList.add('active');
 
+        // 加载文件内容
         const response = await fetch(`${VAULT_API}/file/${encodeURIComponent(file.filename)}`);
         const data = await response.json();
 
@@ -388,41 +563,215 @@
         document.getElementById('fileStats').style.display = 'flex';
 
         // 启用按钮
-        document.getElementById('openInDoocs').disabled = false;
         document.getElementById('saveToAPI').disabled = false;
         document.getElementById('saveFile').disabled = false;
         document.getElementById('copyContent').disabled = false;
+
+        // ✅ 关键：将内容传入 Doocs
+        loadContentToDoocs(currentContent);
+
       } catch (error) {
-        alert(`❌ 打开文件失败: ${error.message}`);
+        showMessage(`❌ 打开文件失败: ${error.message}`, 'error');
       }
     }
 
-    // 打开到 Doocs
-    async function openInDoocs() {
-      const content = document.getElementById('editor').value;
-      const doocsWindow = window.open(DOOCS_URL, 'doocs');
+    // ==================== Doocs 集成 ====================
+    function initDoocsFrame() {
+      const frame = document.getElementById('doocsFrame');
+      
+      // 创建一个完整的 markdown 预览器，模拟 Doocs 的排版效果
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Doocs 排版预览</title>
+          <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              background: #f5f5f5;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              padding: 30px;
+              line-height: 1.6;
+            }
+            .markdown-container {
+              background: white;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 40px;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .content-placeholder {
+              text-align: center;
+              color: #999;
+              padding: 60px 20px;
+              font-size: 14px;
+            }
+            /* Markdown 样式 */
+            h1, h2, h3, h4, h5, h6 {
+              margin: 25px 0 15px 0;
+              padding-bottom: 10px;
+              border-bottom: 1px solid #eee;
+              color: #333;
+            }
+            h1 { font-size: 32px; font-weight: 600; }
+            h2 { font-size: 28px; font-weight: 600; }
+            h3 { font-size: 24px; font-weight: 600; }
+            h4 { font-size: 20px; font-weight: 500; }
+            h5 { font-size: 18px; }
+            h6 { font-size: 16px; color: #666; }
+            p { margin: 12px 0; }
+            a { color: #667eea; text-decoration: none; border-bottom: 1px solid #667eea; }
+            a:hover { background: #f0f0f0; }
+            code {
+              background: #f5f5f5;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-family: 'Courier New', monospace;
+              font-size: 13px;
+              color: #d63384;
+            }
+            pre {
+              background: #2d2d2d;
+              color: #f8f8f2;
+              padding: 15px;
+              border-radius: 6px;
+              overflow-x: auto;
+              margin: 15px 0;
+              font-size: 13px;
+              line-height: 1.4;
+            }
+            pre code {
+              background: none;
+              color: #f8f8f2;
+              padding: 0;
+            }
+            blockquote {
+              border-left: 4px solid #667eea;
+              padding-left: 15px;
+              margin: 15px 0;
+              color: #666;
+              font-style: italic;
+            }
+            ul, ol {
+              padding-left: 30px;
+              margin: 12px 0;
+            }
+            li { margin: 6px 0; }
+            img {
+              max-width: 100%;
+              height: auto;
+              margin: 15px 0;
+              border-radius: 6px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            hr {
+              border: none;
+              height: 2px;
+              background: linear-gradient(to right, #e0e0e0 0%, #667eea 50%, #e0e0e0 100%);
+              margin: 25px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 15px 0;
+            }
+            th, td {
+              border: 1px solid #e0e0e0;
+              padding: 10px;
+              text-align: left;
+            }
+            th {
+              background: #f5f5f5;
+              font-weight: 600;
+            }
+            strong { font-weight: 600; color: #333; }
+            em { font-style: italic; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="markdown-container">
+            <div id="preview" class="content-placeholder">📝 等待内容...</div>
+          </div>
+          <script>
+            // 配置 marked
+            marked.setOptions({
+              breaks: true,
+              gfm: true
+            });
 
-      try {
-        await navigator.clipboard.writeText(content);
-        showMessage(
-          doocsWindow
-            ? '✅ 内容已复制。请在 Doocs 编辑器中粘贴并检查排版。'
-            : '✅ 内容已复制，但 Doocs 弹窗被拦截；请手动打开 Doocs 并粘贴。',
-          'success'
-        );
-      } catch (error) {
-        showMessage(`❌ 无法访问剪贴板，请手动复制内容: ${error.message}`, 'error');
+            // 接收来自父窗口的 markdown 内容
+            window.addEventListener('message', (event) => {
+              if (event.data.type === 'UPDATE_CONTENT') {
+                renderMarkdown(event.data.content);
+              }
+            });
+
+            // 渲染 markdown
+            function renderMarkdown(markdown) {
+              const preview = document.getElementById('preview');
+              
+              if (!markdown || !markdown.trim()) {
+                preview.innerHTML = '<div class="content-placeholder">📝 编辑器为空</div>';
+                preview.className = '';
+                return;
+              }
+
+              try {
+                // 使用 marked 渲染 markdown
+                const html = marked.parse(markdown);
+                preview.innerHTML = html;
+                preview.className = '';
+              } catch (error) {
+                preview.innerHTML = '<div class="content-placeholder">❌ 渲染失败: ' + error.message + '</div>';
+              }
+            }
+
+            // 页面加载完成后，通知父窗口已准备就绪
+            window.parent.postMessage({ type: 'FRAME_READY' }, '*');
+          </script>
+        </body>
+        </html>
+      `;
+
+      frame.onload = () => {
+        doocsReady = true;
+        document.getElementById('previewStatus').textContent = '✅ 实时预览已启用';
+      };
+
+      frame.srcdoc = html;
+    }
+
+    function loadContentToDoocs(content) {
+      const frame = document.getElementById('doocsFrame');
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({
+          type: 'UPDATE_CONTENT',
+          content: content
+        }, '*');
       }
     }
 
-    // 保存到发布 API
+    // ==================== 编辑器事件 ====================
+    document.getElementById('editor').addEventListener('input', (e) => {
+      const content = e.target.value;
+      currentContent = content;
+      
+      // 实时同步到 Doocs 预览
+      loadContentToDoocs(content);
+    });
+
+    // ==================== 业务操作 ====================
     async function saveToAPI() {
       const content = document.getElementById('editor').value;
       const title = currentFile?.name || '未命名文章';
-      
+
       try {
-        // 第 1 步：创建草稿记录
-        const createRes = await fetch('http://127.0.0.1:3001/api/publish/records', {
+        // 第 1 步：创建草稿
+        const createRes = await fetch(`${PUBLISH_API}/publish/records`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -433,17 +782,14 @@
           })
         });
 
-        if (!createRes.ok) {
-          showMessage('❌ 创建草稿失败', 'error');
-          return;
-        }
+        if (!createRes.ok) throw new Error('创建草稿失败');
 
         const createData = await createRes.json();
         const recordId = createData.data.id;
 
-        // 第 2 步：保存排版内容（HTML + Markdown）
+        // 第 2 步：保存排版内容
         const contentRes = await fetch(
-          `http://127.0.0.1:3001/api/publish/records/${recordId}/content`,
+          `${PUBLISH_API}/publish/records/${recordId}/content`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -455,19 +801,15 @@
         );
 
         if (contentRes.ok) {
-          showMessage(
-            `✅ 已保存到发布 API！\n记录 ID: ${recordId}\n请在浏览器主菜单查看发布状态。`,
-            'success'
-          );
+          showMessage(`✅ 已保存! 记录 ID: ${recordId}`, 'success');
         } else {
-          showMessage('❌ 保存内容失败', 'error');
+          throw new Error('保存内容失败');
         }
       } catch (error) {
-        showMessage(`❌ 错误: ${error.message}`, 'error');
+        showMessage(`❌ ${error.message}`, 'error');
       }
     }
 
-    // 保存文件
     async function saveFile() {
       const content = document.getElementById('editor').value;
       
@@ -483,48 +825,76 @@
 
         if (response.ok) {
           currentContent = content;
-          showMessage('✅ 文件已保存成功！', 'success');
+          showMessage('✅ 文件已保存', 'success');
         } else {
-          showMessage('❌ 保存失败', 'error');
+          throw new Error('保存失败');
         }
       } catch (error) {
-        showMessage(`❌ 错误: ${error.message}`, 'error');
+        showMessage(`❌ ${error.message}`, 'error');
       }
     }
 
-    // 复制内容
     function copyContent() {
       const content = document.getElementById('editor').value;
       navigator.clipboard.writeText(content).then(() => {
-        showMessage('✅ 内容已复制到剪贴板！', 'success');
+        showMessage('✅ 已复制到剪贴板', 'success');
       });
     }
 
-    // 显示消息
-    function showMessage(message, type) {
-      const toolbar = document.querySelector('.editor-toolbar');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = type;
-      messageDiv.textContent = message;
-      messageDiv.style.position = 'fixed';
-      messageDiv.style.top = '20px';
-      messageDiv.style.right = '20px';
-      messageDiv.style.zIndex = '9999';
-      messageDiv.style.minWidth = '300px';
-      messageDiv.style.textAlign = 'center';
-      
-      document.body.appendChild(messageDiv);
-      setTimeout(() => messageDiv.remove(), 3000);
-    }
+    // ==================== 视图切换 ====================
+    document.getElementById('toggleEditor').addEventListener('click', (e) => {
+      editorVisible = !editorVisible;
+      const editorPanel = document.getElementById('editorPanel');
+      const previewPanel = document.getElementById('previewPanel');
+      const container = document.getElementById('editorContainer');
 
-    // 事件监听
-    document.getElementById('openInDoocs').onclick = openInDoocs;
+      e.target.classList.toggle('active');
+
+      if (editorVisible && previewVisible) {
+        container.className = 'editor-container';
+        editorPanel.classList.remove('hidden');
+        previewPanel.classList.remove('hidden');
+      } else if (editorVisible) {
+        container.className = 'editor-container full-editor';
+        editorPanel.classList.remove('hidden');
+        previewPanel.classList.add('hidden');
+      } else {
+        editorPanel.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('togglePreview').addEventListener('click', (e) => {
+      previewVisible = !previewVisible;
+      const previewPanel = document.getElementById('previewPanel');
+      const editorPanel = document.getElementById('editorPanel');
+      const container = document.getElementById('editorContainer');
+
+      e.target.classList.toggle('active');
+
+      if (editorVisible && previewVisible) {
+        container.className = 'editor-container';
+        editorPanel.classList.remove('hidden');
+        previewPanel.classList.remove('hidden');
+      } else if (previewVisible) {
+        container.className = 'editor-container full-preview';
+        editorPanel.classList.add('hidden');
+        previewPanel.classList.remove('hidden');
+      } else {
+        previewPanel.classList.add('hidden');
+      }
+    });
+
+    // ==================== 事件绑定 ====================
     document.getElementById('saveToAPI').onclick = saveToAPI;
     document.getElementById('saveFile').onclick = saveFile;
     document.getElementById('copyContent').onclick = copyContent;
 
-    // 初始化
-    loadFiles();
+    // ==================== 初始化 ====================
+    window.addEventListener('load', () => {
+      loadFiles();
+      initDoocsFrame();
+      showMessage('✅ 系统已就绪，选择文章开始编辑', 'success');
+    });
   </script>
 </body>
 </html>
