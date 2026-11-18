@@ -33,7 +33,8 @@
     "workflow:start": "node src/e2e-workflow.js",
     "test:wechat-api": "node scripts/test-wechat-api.cjs",
     "test:wechat-mock": "WECHAT_ADAPTER=mock node scripts/test-wechat-api.cjs",
-    "test:publish-flow": "jest src/services/publish --coverage"
+    "test:publish-flow": "jest src/services/publish --coverage",
+    "demo:publish": "node scripts/demo-publish-workflow.cjs"
   },
   "keywords": [
     "wechat",
