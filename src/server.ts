@@ -7,9 +7,11 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import * as fs from 'fs';
-import { initDatabase, getDatabase } from './db/database';
-import * as PublishService from './services/publish/db-manager';
-import publishRoutes from './routes/publish';
+import { initDatabase, getDatabase } from './db/database.js';
+import * as PublishService from './services/publish/db-manager.js';
+import { initWechatClient } from './services/wechat/index.js';
+import publishRoutes from './routes/publish.js';
+import wechatRoutes from './routes/wechat.js';
 
 // ============================================================================
 // 类型定义
@@ -20,6 +22,7 @@ export interface ServerConfig {
   host: string;
   dbPath: string;
   env: 'development' | 'production' | 'test';
+  wechatMode?: 'mock' | 'real';
   corsOrigin?: string | string[];
 }
 
@@ -39,6 +42,14 @@ let server: any = null;
  */
 export async function createServer(config: ServerConfig): Promise<Express> {
   console.log('🚀 初始化 Express 服务器...');
+
+  const wechatMode = config.wechatMode || process.env.WECHAT_ADAPTER || 'mock';
+  if (wechatMode !== 'mock' && wechatMode !== 'real') {
+    throw new Error(`无效的 WECHAT_ADAPTER: ${wechatMode}`);
+  }
+  if (wechatMode === 'real' && (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET)) {
+    throw new Error('WECHAT_APP_ID and WECHAT_APP_SECRET are required when WECHAT_ADAPTER=real');
+  }
 
   // 创建 Express 应用
   app = express();
@@ -78,12 +89,68 @@ export async function createServer(config: ServerConfig): Promise<Express> {
   console.log('🗄️  初始化数据库...');
   await initDatabase(config.dbPath);
 
+  // Default to the offline adapter unless real publishing is explicitly enabled.
+  await initWechatClient(
+    {
+      appId: process.env.WECHAT_APP_ID || '',
+      appSecret: process.env.WECHAT_APP_SECRET || '',
+      token: process.env.WECHAT_TOKEN,
+      encodingAesKey: process.env.WECHAT_ENCODING_AES_KEY,
+    },
+    wechatMode === 'mock'
+  );
+
   // ========================================================================
   // 初始化发布服务
   // ========================================================================
 
   console.log('📝 初始化发布服务...');
   PublishService.initPublishManager();
+
+  // ========================================================================
+  // 根路由 - API 文档和欢迎页面
+  // ========================================================================
+
+  app.get('/', (req: Request, res: Response) => {
+    res.json({
+      name: 'WeChat 内容管理与发布系统 P1',
+      version: '0.1.0',
+      status: 'running',
+      environment: config.env,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      description: '完整的 WeChat 公众号内容管理、编辑、审核和自动发布系统',
+      features: [
+        '✅ P1 - WeChat Token 管理',
+        '✅ P2 - 发布记录数据库管理',
+        '✅ P3 - Markdown/HTML 渲染',
+        '✅ P4 - 内容验证与规范化',
+        '✅ P5 - 文件监听与自动发布',
+      ],
+      endpoints: {
+        health: '/health',
+        wechat: {
+          token: 'POST /api/wechat/token',
+          draft: 'POST /api/wechat/draft',
+          publish: 'POST /api/wechat/publish',
+          history: 'GET /api/wechat/history',
+        },
+        publish: {
+          records: 'POST /api/publish/records',
+          list: 'GET /api/publish/records',
+          get: 'GET /api/publish/records/:id',
+          submitReview: 'POST /api/publish/records/:id/submit-review',
+          approve: 'POST /api/publish/records/:id/approve',
+          reject: 'POST /api/publish/records/:id/reject',
+          publish: 'POST /api/publish/records/:id/publish',
+        },
+        storage: 'GET /api/storage/documents',
+      },
+      documentation: 'https://github.com/yourusername/TableDeconstruction',
+      database: config.dbPath,
+      wechatMode: config.wechatMode,
+    });
+  });
 
   // ========================================================================
   // 健康检查端点
@@ -103,7 +170,10 @@ export async function createServer(config: ServerConfig): Promise<Express> {
   // ========================================================================
 
   // 发布路由
-  app.use('/api/publish', publishRoutes);
+  app.use('/api/publish', publishRoutes());
+
+  // WeChat 路由
+  app.use('/api/wechat', wechatRoutes());
 
   // ========================================================================
   // 存储 API（来自 Doocs）

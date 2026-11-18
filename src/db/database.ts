@@ -15,7 +15,9 @@ import { v4 as uuidv4 } from 'uuid';
 export interface PublishRecordDB {
   id: string;
   title: string;
-  content: string;
+  content: string;  // 原始内容（通常为 Markdown）
+  html_content?: string;  // Doocs 排版后的 HTML 内容
+  markdown_content?: string;  // 原始 Markdown（备用字段）
   status: string;
   created_at: string;
   updated_at: string;
@@ -96,6 +98,8 @@ export class DatabaseManager {
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
+        html_content TEXT,
+        markdown_content TEXT,
         status TEXT NOT NULL DEFAULT 'draft',
         creator TEXT,
         file_path TEXT,

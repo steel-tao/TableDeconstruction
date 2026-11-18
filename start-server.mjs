@@ -5,7 +5,7 @@
  * @description 启动完整服务器
  * 
  * 使用方法:
- *   node start-server.mjs
+ *   node --experimental-specifier-resolution=node start-server.mjs
  *   PORT=3001 npm run start:server
  */
 
@@ -28,7 +28,8 @@ const config = {
   port: parseInt(process.env.PORT || '3000'),
   host: process.env.HOST || 'localhost',
   dbPath: process.env.DB_PATH || path.join(__dirname, 'data', 'db.sqlite'),
-  env: (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test',
+  env: process.env.NODE_ENV || 'development',
+  wechatMode: process.env.WECHAT_ADAPTER || 'mock',
   corsOrigin: process.env.CORS_ORIGIN,
 };
 
