@@ -213,6 +213,32 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
+    }
+
+    .editor-panel-header,
+    .preview-panel-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f5f5f5;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    #editor {
+      flex: 1;
+      padding: 15px;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      border: none;
+      outline: none;
+      resize: none;
+      background: white;
+      color: #333;
+      overflow: auto;
     }
 
     .preview-panel {
@@ -220,7 +246,40 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
     }
+
+    #preview {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+      background: #f9f9f9;
+      line-height: 1.8;
+      color: #333;
+    }
+
+    #preview h1, #preview h2, #preview h3 {
+      margin: 15px 0 10px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    #preview h1 { font-size: 24px; }
+    #preview h2 { font-size: 20px; }
+    #preview h3 { font-size: 18px; }
+
+    #preview p { margin: 10px 0; }
+    #preview strong { font-weight: 600; color: #333; }
+    #preview em { font-style: italic; color: #666; }
+    #preview code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; color: #d63384; font-size: 12px; }
+    #preview pre { background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    #preview pre code { background: none; color: #f8f8f2; padding: 0; }
+    #preview ul, #preview ol { padding-left: 30px; margin: 10px 0; }
+    #preview li { margin: 5px 0; }
+    #preview a { color: #667eea; text-decoration: none; border-bottom: 1px solid #667eea; }
+    #preview a:hover { background: #f0f0f0; }
+    #preview blockquote { border-left: 4px solid #667eea; padding-left: 15px; margin: 10px 0; color: #666; }
+    #preview hr { border: none; height: 1px; background: #eee; margin: 20px 0; }
 
     .editor-panel-header,
     .preview-panel-header {
@@ -312,17 +371,17 @@
       </div>
 
       <div class="editor-toolbar">
-        <button class="btn-primary" id="openInDoocs" disabled>
-          🚀 打开到 Doocs
+        <button class="btn-primary" id="editInDoocs" disabled title="在 Doocs 编辑器中编辑此文章（自动填充内容）">
+          ✏️ 在 Doocs 编辑
         </button>
-        <button class="btn-primary" id="saveToAPI" disabled>
-          💾 保存到发布 API
+        <button class="btn-primary" id="saveToAPI" disabled title="保存到发布 API，自动生成微信兼容 HTML">
+          💾 保存发布
         </button>
-        <button class="btn-primary" id="saveFile" disabled>
-          💾 保存文件
+        <button class="btn-primary" id="saveFile" disabled title="保存编辑器中的内容到本地文件">
+          🔒 保存文件
         </button>
-        <button class="btn-secondary" id="copyContent" disabled>
-          📋 复制内容
+        <button class="btn-secondary" id="copyContent" disabled title="复制编辑器中的内容到剪贴板">
+          📋 复制
         </button>
       </div>
 
@@ -425,7 +484,7 @@
         document.getElementById('fileStats').style.display = 'flex';
 
         // 启用按钮
-        document.getElementById('openInDoocs').disabled = false;
+        document.getElementById('editInDoocs').disabled = false;
         document.getElementById('saveToAPI').disabled = false;
         document.getElementById('saveFile').disabled = false;
         document.getElementById('copyContent').disabled = false;
@@ -437,21 +496,30 @@
       }
     }
 
-    // 打开到 Doocs
-    async function openInDoocs() {
+    // 在 Doocs 编辑（带自动填充）
+    async function editInDoocs() {
       const content = document.getElementById('editor').value;
-      const doocsWindow = window.open(DOOCS_URL, 'doocs');
-
+      
       try {
+        // 复制内容到剪贴板
         await navigator.clipboard.writeText(content);
-        showMessage(
-          doocsWindow
-            ? '✅ 内容已复制。请在 Doocs 编辑器中粘贴并检查排版。'
-            : '✅ 内容已复制，但 Doocs 弹窗被拦截；请手动打开 Doocs 并粘贴。',
-          'success'
-        );
+        
+        // 打开 Doocs 编辑器
+        const doocsWindow = window.open(DOOCS_URL, 'doocs');
+        
+        if (doocsWindow) {
+          showMessage(
+            '✅ Doocs 编辑器已打开！内容已复制到剪贴板。\n在 Doocs 中粘贴 (Ctrl+V) 即可开始编辑。',
+            'success'
+          );
+        } else {
+          showMessage(
+            '⚠️ Doocs 窗口被拦截。请手动访问 http://127.0.0.1:8800 打开编辑器。',
+            'error'
+          );
+        }
       } catch (error) {
-        showMessage(`❌ 无法访问剪贴板，请手动复制内容: ${error.message}`, 'error');
+        showMessage(`❌ 错误: ${error.message}`, 'error');
       }
     }
 
@@ -593,7 +661,7 @@
     });
 
     // 事件监听
-    document.getElementById('openInDoocs').onclick = openInDoocs;
+    document.getElementById('editInDoocs').onclick = editInDoocs;
     document.getElementById('saveToAPI').onclick = saveToAPI;
     document.getElementById('saveFile').onclick = saveFile;
     document.getElementById('copyContent').onclick = copyContent;
