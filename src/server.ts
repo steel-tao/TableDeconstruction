@@ -12,6 +12,7 @@ import * as PublishService from './services/publish/db-manager.js';
 import { initWechatClient } from './services/wechat/index.js';
 import publishRoutes from './routes/publish.js';
 import wechatRoutes from './routes/wechat.js';
+import doocsRoutes from './routes/doocs.js';
 
 // ============================================================================
 // 类型定义
@@ -144,6 +145,11 @@ export async function createServer(config: ServerConfig): Promise<Express> {
           reject: 'POST /api/publish/records/:id/reject',
           publish: 'POST /api/publish/records/:id/publish',
         },
+        doocs: {
+          render: 'POST /api/doocs/render',
+          status: 'GET /api/doocs/status',
+          batchRender: 'POST /api/doocs/batch-render',
+        },
         storage: 'GET /api/storage/documents',
       },
       documentation: 'https://github.com/yourusername/TableDeconstruction',
@@ -174,6 +180,9 @@ export async function createServer(config: ServerConfig): Promise<Express> {
 
   // WeChat 路由
   app.use('/api/wechat', wechatRoutes());
+
+  // Doocs 渲染路由
+  app.use('/api/doocs', doocsRoutes());
 
   // ========================================================================
   // 存储 API（来自 Doocs）

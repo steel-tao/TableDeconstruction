@@ -4,6 +4,7 @@
  */
 
 import * as WechatService from '../wechat/index.js';
+import * as DoocsService from '../doocs/index.js';
 import { getDatabase, PublishRecordDB } from '../../db/database.js';
 
 // ============================================================================
@@ -220,10 +221,50 @@ export class PublishManager {
     }
 
     try {
-      // 准备文章数据
+      // =====================================================================
+      // 步骤 1: 调用 Doocs 渲染为微信兼容 HTML
+      // =====================================================================
+      let htmlContent = record.html_content;
+      
+      // 如果没有已缓存的 HTML，则通过 Doocs 生成
+      if (!htmlContent) {
+        console.log(`📝 正在通过 Doocs 渲染内容: ${recordId}`);
+        
+        // 判断 content 是 Markdown 还是 HTML
+        const isMarkdown = !record.content.includes('<');
+        
+        if (isMarkdown) {
+          // 是 Markdown，调用 Doocs 渲染
+          const renderResult = await DoocsService.renderMarkdownToWechat(
+            record.content
+          );
+          
+          if (renderResult.success) {
+            htmlContent = renderResult.html;
+            console.log(`✓ Doocs 渲染成功`);
+          } else {
+            console.warn(
+              `⚠️ Doocs 渲染失败: ${renderResult.error}，使用原始内容`
+            );
+            htmlContent = record.content;
+          }
+        } else {
+          // 已经是 HTML
+          htmlContent = record.content;
+        }
+
+        // 保存渲染后的 HTML
+        db.updatePublishRecord(recordId, {
+          html_content: htmlContent,
+        });
+      }
+
+      // =====================================================================
+      // 步骤 2: 准备文章数据并发送到微信
+      // =====================================================================
       const article: WechatService.DraftArticle = {
         title: record.title,
-        content: record.content,
+        content: htmlContent || record.content,  // 使用渲染后的 HTML
         author: record.creator || 'Unknown',
         digest: this.generateDigest(record.content),
       };
@@ -233,7 +274,9 @@ export class PublishManager {
         publish_time: scheduledTime ? Math.floor(scheduledTime.getTime() / 1000) : 0,
       });
 
-      // 更新记录
+      // =====================================================================
+      // 步骤 3: 更新记录为已发布
+      // =====================================================================
       const updated = db.updatePublishRecord(recordId, {
         status: scheduledTime ? PublishStatus.SCHEDULED : PublishStatus.PUBLISHED,
         wechat_msg_id: msgId,

@@ -294,6 +294,78 @@ curl -X POST http://localhost:3001/api/publish/records/{id}/approve \
 
 ---
 
+### Doocs 编辑器集成 API
+
+**系统新增功能**：Doocs 编辑器自动集成，无需手动复制粘贴。所有发布流程会自动调用 Doocs 进行微信兼容性排版。
+
+#### 检查 Doocs 服务状态
+
+**GET** `/api/doocs/status`
+
+```bash
+curl -X GET http://localhost:3001/api/doocs/status
+```
+
+**响应**:
+```json
+{
+  "available": true,
+  "url": "http://127.0.0.1:8800",
+  "message": "Doocs service is running"
+}
+```
+
+#### 渲染 Markdown 为微信兼容 HTML
+
+**POST** `/api/doocs/render`
+
+```bash
+curl -X POST http://localhost:3001/api/doocs/render \
+  -H "Content-Type: application/json" \
+  -d '{
+    "markdown": "# 标题\n\n这是内容",
+    "options": {
+      "theme": "default",
+      "fullPage": false
+    }
+  }'
+```
+
+**响应**:
+```json
+{
+  "success": true,
+  "html": "<h1 style=\"...\">标题</h1><p style=\"...\">这是内容</p>"
+}
+```
+
+#### 批量渲染
+
+**POST** `/api/doocs/batch-render`
+
+```bash
+curl -X POST http://localhost:3001/api/doocs/batch-render \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      { "id": "1", "markdown": "# 文章1" },
+      { "id": "2", "markdown": "# 文章2" }
+    ]
+  }'
+```
+
+**自动集成流程**：
+1. 用户创建发布记录（Markdown 或 HTML）
+2. 提交审核和批准
+3. 执行发布时，系统自动：
+   - 检测 Doocs 服务状态
+   - 调用 `/api/doocs/render` 进行排版
+   - 保存渲染后的 HTML
+   - 发送到 WeChat API
+4. 完成发布，无需任何手动操作
+
+---
+
 ## 🔧 常见问题
 
 ### Q: 如何停止服务？
