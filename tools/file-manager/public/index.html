@@ -200,6 +200,8 @@
 
     let currentFile = null;
     let currentContent = '';
+    let pendingImportId = null;      // 🆕 记录待处理的导入ID
+    let reloadInProgress = false;    // 🆕 记录 iframe reload 是否正在进行中
 
     // 加载文件列表
     async function loadFiles() {
@@ -244,7 +246,8 @@
             <div class="file-name">${file.filename}</div>
             <div class="file-meta">${file.wordCount} 字</div>
           `;
-          fileDiv.onclick = () => openFile(file);
+          // 🔧 显式传递文件对象和点击元素，不依赖隐式全局 event
+          fileDiv.onclick = (evt) => openFile(file, fileDiv, evt);
           groupDiv.appendChild(fileDiv);
         });
 
@@ -253,13 +256,17 @@
     }
 
     // 打开文件 - 在iframe中加载Doocs编辑器
-    async function openFile(file) {
+    // 🔧 改为显式接收点击元素参数，不依赖隐式全局 event
+    async function openFile(file, clickedElement, evt) {
       try {
         // 更新UI - 高亮选中的文件
         document.getElementById('fileList').querySelectorAll('.file-item').forEach(el => {
           el.classList.remove('active');
         });
-        event.target.closest('.file-item').classList.add('active');
+        // 🔧 安全判空并高亮实际点击的元素
+        if (clickedElement && typeof clickedElement.classList !== 'undefined') {
+          clickedElement.classList.add('active');
+        }
 
         // 获取文件内容
         const response = await fetch(`${VAULT_API}/file/${encodeURIComponent(file.filename)}`);
@@ -291,15 +298,74 @@
       doocsLoading.style.display = 'none';
     }
 
-    // 通过postMessage通知iframe新文件信息
-    function notifyDoocsFrameNewFile(filename, markdownContent) {
-      const doocsFrame = document.getElementById('doocsFrame');
-      if (doocsFrame && doocsFrame.contentWindow) {
-        doocsFrame.contentWindow.postMessage({
-          type: 'LOAD_DOCUMENT',
-          filename: filename,
-          markdown: markdownContent
-        }, '*');
+    // 🔧 通过后端暂存通知 iframe 新文件信息（完全改造版）
+    async function notifyDoocsFrameNewFile(filename, markdownContent) {
+      try {
+        console.log('[Obsidian] 发送导入请求，文件:', filename);
+        
+        // 🆕 调用 3000 后端的导入接口暂存内容
+        const response = await fetch(`${VAULT_API}/doocs/import`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            content: markdownContent, 
+            filename: filename
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        
+        const result = await response.json();
+        const newImportId = result.importId;
+        
+        console.log('[Obsidian] 新导入ID:', newImportId);
+        
+        // 🆕 如果当前有 reload 在进行中，记录新的 importId，让它加载最新版本
+        if (reloadInProgress) {
+          console.log('[Obsidian] 当前有 reload 进行中，更新待刷新 importId 为:', newImportId);
+          pendingImportId = newImportId;
+          return;
+        }
+        
+        // 🆕 执行 reload
+        reloadInProgress = true;
+        pendingImportId = newImportId;
+        
+        const iframe = document.getElementById('doocsFrame');
+        
+        // 🆕 完整的一次性监听器处理：自动移除、防重复、处理递归 reload
+        const onloadHandler = function() {
+          console.log('[Obsidian] iframe 已重新加载');
+          // 🆕 立即清理监听器，防止重复触发
+          iframe.onload = null;
+          reloadInProgress = false;
+          
+          // 🆕 如果在 reload 过程中有新请求到达，递归地再刷一次
+          if (pendingImportId !== newImportId) {
+            console.log('[Obsidian] 检测到更新的 importId，准备递归重新加载');
+            const newPendingId = pendingImportId;
+            // 🆕 触发新的 reload（确保清理旧 reload 参数再拼接新参数）
+            const baseSrc = iframe.src.split('?')[0];
+            iframe.src = baseSrc + '?reload=' + Date.now();
+            pendingImportId = newPendingId;
+            reloadInProgress = true;
+            iframe.onload = onloadHandler;
+          }
+        };
+        iframe.onload = onloadHandler;
+        
+        // 🆕 触发初始 reload（清理旧 reload 参数再拼接新参数）
+        const baseSrc = iframe.src.split('?')[0];
+        iframe.src = baseSrc + '?reload=' + Date.now();
+        
+        console.log('[Obsidian] ✅ iframe 已触发刷新，importId:', newImportId);
+        
+      } catch (error) {
+        console.error('[Obsidian] ❌ 导入失败:', error);
+        reloadInProgress = false;
+        document.getElementById('doocsLoading').innerHTML = `<div style="color:#f44336; text-align:center;">❌ 导入失败: ${error.message}<br/>请尝试手动复制内容到 Doocs</div>`;
       }
     }
 

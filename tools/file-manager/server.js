@@ -118,6 +118,66 @@ app.post('/api/file/save', (req, res) => {
   }
 });
 
+// ==================== Doocs 导入暂存接口（新增）====================
+// 🆕 内存暂存最后一次导入的内容 + 消费记录
+let lastImportData = { 
+  content: '', 
+  filename: '', 
+  timestamp: null,
+  importId: null
+};
+
+// 🆕 POST /api/doocs/import - 接收来自前端的文件内容
+app.post('/api/doocs/import', (req, res) => {
+  try {
+    const { content, filename } = req.body;
+    const importId = Date.now().toString();  // 🆕 生成唯一导入ID（时间戳）
+    
+    lastImportData = { 
+      content, 
+      filename, 
+      timestamp: Date.now(),
+      importId,
+      ready: true
+    };
+    
+    console.log(`[Import] 新文件暂存: ${filename}，importId: ${importId}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Content stored for Doocs import',
+      importId,
+      instructions: 'Frontend should reload iframe with this importId'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 🆕 GET /api/doocs/import-data - 供 8800 读取暂存内容（带 CORS 头）
+app.get('/api/doocs/import-data', (req, res) => {
+  // 🆕 CORS 响应头：允许 8800 跨源访问
+  res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8800');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.send(200);
+  }
+  
+  // 🆕 查询字符串可能包含请求者期望的 importId（用于时间戳去重）
+  const requestedImportId = req.query.importId;
+  
+  if (requestedImportId && lastImportData.importId !== requestedImportId) {
+    console.log(`[Import] 请求的 importId (${requestedImportId}) 与当前不符 (${lastImportData.importId})，可能被覆盖`);
+  }
+  
+  res.json({
+    ...lastImportData,
+    serverTimestamp: Date.now()
+  });
+});
+
 // ==================== Doocs Storage API Proxy ====================
 // 转发所有 /api/doocs/storage/* 请求到 Doocs 的 /api/storage/*
 app.all('/api/doocs/storage/*', async (req, res) => {
