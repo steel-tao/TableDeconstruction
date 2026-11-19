@@ -12,6 +12,8 @@ const VAULT_PATH = 'G:\\Obsidian\\wechat\\桌面解构';
 
 // 中间件
 app.use(express.json());
+
+// 静态文件服务
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API: 获取文件列表
@@ -113,6 +115,57 @@ app.post('/api/file/save', (req, res) => {
     res.json({ success: true, message: 'File saved successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== Doocs Storage API Proxy ====================
+// 转发所有 /api/doocs/storage/* 请求到 Doocs 的 /api/storage/*
+app.all('/api/doocs/storage/*', async (req, res) => {
+  try {
+    const targetPath = req.path.replace('/api/doocs/storage', '/api/storage');
+    const targetUrl = `http://127.0.0.1:8800${targetPath}`;
+    
+    // 准备fetch选项
+    const fetchOptions = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
+
+    // 收集请求体（仅非GET请求）
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      const chunks = [];
+      await new Promise((resolve, reject) => {
+        req.on('data', (chunk) => chunks.push(chunk));
+        req.on('end', () => resolve());
+        req.on('error', reject);
+        setTimeout(resolve, 3000); // 3秒超时保护
+      });
+      
+      if (chunks.length > 0) {
+        fetchOptions.body = Buffer.concat(chunks).toString('utf-8');
+        console.log(`[PROXY] 请求体:`, fetchOptions.body);
+      }
+    }
+
+    console.log(`[PROXY] ${req.method} ${targetUrl}`);
+    const proxyRes = await fetch(targetUrl, fetchOptions);
+    const resBody = await proxyRes.text();
+
+    console.log(`[PROXY] ✅ ${proxyRes.status}`);
+    console.log(`[PROXY] 响应体:`, resBody);
+
+    // 转发响应
+    res.status(proxyRes.status);
+    proxyRes.headers.forEach((value, name) => {
+      res.setHeader(name, value);
+    });
+    
+    res.send(resBody);
+  } catch (error) {
+    console.error(`[PROXY] ❌ Error:`, error);
+    res.status(502).json({ error: 'Proxy error', details: error.message });
   }
 });
 
