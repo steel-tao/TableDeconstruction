@@ -201,6 +201,7 @@
     let currentFile = null;
     let currentContent = '';
     let pendingImportId = null;      // 🆕 记录待处理的导入ID
+    let consumedImportId = null;     // 🆕 记录已消费过的导入ID（防止同一项被重复处理）
     let reloadInProgress = false;    // 🆕 记录 iframe reload 是否正在进行中
 
     // 加载文件列表
@@ -336,25 +337,29 @@
         const iframe = document.getElementById('doocsFrame');
         
         // 🆕 完整的一次性监听器处理：自动移除、防重复、处理递归 reload
-        const onloadHandler = function() {
-          console.log('[Obsidian] iframe 已重新加载');
-          // 🆕 立即清理监听器，防止重复触发
-          iframe.onload = null;
-          reloadInProgress = false;
-          
-          // 🆕 如果在 reload 过程中有新请求到达，递归地再刷一次
-          if (pendingImportId !== newImportId) {
-            console.log('[Obsidian] 检测到更新的 importId，准备递归重新加载');
-            const newPendingId = pendingImportId;
-            // 🆕 触发新的 reload（确保清理旧 reload 参数再拼接新参数）
-            const baseSrc = iframe.src.split('?')[0];
-            iframe.src = baseSrc + '?reload=' + Date.now();
-            pendingImportId = newPendingId;
-            reloadInProgress = true;
-            iframe.onload = onloadHandler;
-          }
+        // 🔧 【修复】使用 IIFE 闭包捕获本次加载的 importId，防止在下次 notifyDoocsFrameNewFile 调用时被覆盖
+        iframe.onload = function() {
+            console.log('[Obsidian] iframe 已重新加载');
+            // 🆕 立即清理监听器，防止重复触发
+            iframe.onload = null;
+            reloadInProgress = false;
+            
+            // 🔧 【修复】三条件断定是否有新的待处理项
+            // 条件1：pendingImportId 不为 null（有待处理项）
+            // 条件2：pendingImportId 与当前加载的 loadedImportId 不同（待处理项是新的）【关键修复】
+            // 条件3：pendingImportId 与已消费的 consumedImportId 不同（该项尚未被处理过）
+            if (pendingImportId !== null && 
+                pendingImportId !== newImportId && 
+                pendingImportId !== consumedImportId) {
+              console.log('[Obsidian] 检测到更新的 importId，重新导入最新文件内容，待处理项:', pendingImportId);
+              
+              // 【关键】更新已消费标记，防止同一项被多个 onloadHandler 重复处理
+              consumedImportId = pendingImportId;
+              
+              // 【保证】此时 currentFile 和 currentContent 已是最新状态（由 openFile 保证）
+              notifyDoocsFrameNewFile(currentFile.filename, currentContent);
+            }
         };
-        iframe.onload = onloadHandler;
         
         // 🆕 触发初始 reload（清理旧 reload 参数再拼接新参数）
         const baseSrc = iframe.src.split('?')[0];
