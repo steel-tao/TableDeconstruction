@@ -44,10 +44,10 @@ if (-not (Test-Path $doocsDepsPath)) {
 # 启动 Doocs 服务 (端口 8800)
 # ============================================================================
 if ($Mode -eq 'full') {
-    Write-Host "Starting Doocs editor on port 8800..."
+    Write-Host "Starting Doocs editor on port 8800 (via proxy server)..."
     Start-Job -ScriptBlock {
-        Set-Location F:\TableDeconstruction\tools\doocs
-        node node_modules/@doocs/md-cli/index.js --port 8800
+        Set-Location F:\TableDeconstruction
+        node tools/doocs/server.js
     } -Name "Doocs" | Out-Null
     Start-Sleep -Seconds 3
 }
