@@ -120,7 +120,7 @@ const proxyServer = http.createServer((req, res) => {
     setTimeout(() => {
       if (token !== gen) return;
       const cm = document.querySelector(CM_SELECTOR);
-      if (!cm || !cm.isConnected || cm.offsetParent === null) return;
+      if (!cm || !cm.isConnected) return;
       const ok = probeOk(cm, text);
       if (!ok) {
         console.log('[Obsidian Init] 内容被覆盖，第 ' + (ticks + 1) + ' 次重写');
@@ -163,7 +163,7 @@ const proxyServer = http.createServer((req, res) => {
       
       // 🔧 策略 1a: CodeMirror 6，经输入管线写入以同步编辑器状态
       const cm6Content = document.querySelector(CM_SELECTOR);
-      if (cm6Content && cm6Content.isConnected && cm6Content.offsetParent !== null) {
+      if (cm6Content && cm6Content.isConnected) {
         writeCM(cm6Content, content);
         if (probeOk(cm6Content, content)) {
           console.log('[Obsidian Init] ✅ CM6 输入管线写入成功，内容长度:', content.length);
@@ -191,7 +191,7 @@ const proxyServer = http.createServer((req, res) => {
       if (!targetEditor) {
         const textareas = document.querySelectorAll('textarea');
         for (let ta of textareas) {
-          if (ta.offsetParent !== null && ta.style.display !== 'none') {
+          if (ta.isConnected && ta.style.display !== 'none') {
             console.log('[Obsidian Init] 检测到可见 textarea，尝试填充，内容长度:', content.length);
             ta.value = content;
             ta.dispatchEvent(new Event('input', { bubbles: true }));
@@ -208,7 +208,7 @@ const proxyServer = http.createServer((req, res) => {
       if (!targetEditor && !document.querySelector('.cm-editor')) {
         const editables = document.querySelectorAll('[contenteditable="true"]');
         for (let ed of editables) {
-          if (ed.offsetParent !== null && ed.style.display !== 'none') {
+          if (ed.isConnected && ed.style.display !== 'none') {
             console.log('[Obsidian Init] 检测到 contenteditable，尝试填充，内容长度:', content.length);
             ed.innerText = content;
             ed.dispatchEvent(new Event('input', { bubbles: true }));

@@ -187,10 +187,7 @@
 
     <!-- 主编辑区 - 完全由Doocs iframe替代 -->
     <div class="main">
-      <iframe id="doocsFrame" src="http://127.0.0.1:8800" style="width:100%; height:100%; border:none; display:none;"></iframe>
-      <div id="doocsLoading" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:16px; color:#667eea;">
-        📂 请从左侧选择文件开始编辑
-      </div>
+      <iframe id="doocsFrame" src="http://127.0.0.1:8800" style="width:100%; height:100%; border:none;"></iframe>
     </div>
   </div>
 
@@ -283,9 +280,6 @@
         currentContent = data.content;
         const contentToImport = data.content;
 
-        // 显示Doocs iframe
-        showDoocsEditor();
-        
         // 通知iframe加载这个文件（通过postMessage）
         setTimeout(() => {
           if (seq !== openSeq) return;
@@ -293,18 +287,8 @@
         }, 500);
         
       } catch (error) {
-        document.getElementById('doocsLoading').innerHTML = `<div style="color:#f44336; text-align:center;">❌ 打开文件失败: ${error.message}</div>`;
+        alert('打开文件失败: ' + error.message);
       }
-    }
-
-    // 显示Doocs编辑器iframe
-    function showDoocsEditor() {
-      const doocsFrame = document.getElementById('doocsFrame');
-      const doocsLoading = document.getElementById('doocsLoading');
-      
-      // 显示iframe，隐藏loading提示
-      doocsFrame.style.display = 'block';
-      doocsLoading.style.display = 'none';
     }
 
     // 🔧 通过后端暂存通知 iframe 新文件信息（完全改造版）
@@ -384,7 +368,7 @@
       } catch (error) {
         console.error('[Obsidian] ❌ 导入失败:', error);
         reloadInProgress = false;
-        document.getElementById('doocsLoading').innerHTML = `<div style="color:#f44336; text-align:center;">❌ 导入失败: ${error.message}<br/>请尝试手动复制内容到 Doocs</div>`;
+        alert('导入失败: ' + error.message + '\n请尝试手动复制内容到 Doocs');
       }
     }
 

@@ -9,6 +9,7 @@
 - `DATABASE_SCHEMA.md` - 数据库设计
 - `API_DESIGN.md` - API接口设计
 - `WORKFLOW_DESIGN.md` - 工作流程设计
+- `PRODUCT_DESIGN.md` - 产品功能方向与后续强化项（Obsidian 到微信草稿箱）
 
 ## 设计原则
 
