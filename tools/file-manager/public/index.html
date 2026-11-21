@@ -200,9 +200,13 @@
 
     let currentFile = null;
     let currentContent = '';
+    let openSeq = 0;
     let pendingImportId = null;      // 🆕 记录待处理的导入ID
     let consumedImportId = null;     // 🆕 记录已消费过的导入ID（防止同一项被重复处理）
     let reloadInProgress = false;    // 🆕 记录 iframe reload 是否正在进行中
+    let doocsReady = false;          // 子页面已报告编辑器挂载（obsidian-ready）
+    let importSeq = 0;
+    let importAckTimer = null;
 
     // 加载文件列表
     async function loadFiles() {
@@ -270,18 +274,22 @@
         }
 
         // 获取文件内容
+        const seq = ++openSeq;
         const response = await fetch(`${VAULT_API}/file/${encodeURIComponent(file.filename)}`);
         const data = await response.json();
+        if (seq !== openSeq) return;
 
         currentFile = data;
         currentContent = data.content;
+        const contentToImport = data.content;
 
         // 显示Doocs iframe
         showDoocsEditor();
         
         // 通知iframe加载这个文件（通过postMessage）
         setTimeout(() => {
-          notifyDoocsFrameNewFile(file.filename, currentContent);
+          if (seq !== openSeq) return;
+          notifyDoocsFrameNewFile(file.filename, contentToImport);
         }, 500);
         
       } catch (error) {
@@ -322,6 +330,11 @@
         const newImportId = result.importId;
         
         console.log('[Obsidian] 新导入ID:', newImportId);
+
+        if (doocsReady && markdownContent) {
+          sendImportToDoocs(filename, markdownContent);
+          return;
+        }
         
         // 🆕 如果当前有 reload 在进行中，记录新的 importId，让它加载最新版本
         if (reloadInProgress) {
@@ -333,6 +346,7 @@
         // 🆕 执行 reload
         reloadInProgress = true;
         pendingImportId = newImportId;
+        doocsReady = false;
         
         const iframe = document.getElementById('doocsFrame');
         
@@ -374,6 +388,19 @@
       }
     }
 
+    // 子页面已挂载时直接发送内容，超时未确认则回退到重载
+    function sendImportToDoocs(filename, markdownContent) {
+      const seq = ++importSeq;
+      clearTimeout(importAckTimer);
+      importAckTimer = setTimeout(() => {
+        console.warn('[Obsidian] 子页面未确认导入，回退到重载');
+        doocsReady = false;
+        notifyDoocsFrameNewFile(filename, markdownContent);
+      }, 3000);
+      document.getElementById('doocsFrame').contentWindow.postMessage(
+        { type: 'obsidian-import', seq, content: markdownContent }, DOOCS_URL);
+    }
+
     // 监听来自iframe的postMessage（获取编辑内容）
     window.addEventListener('message', (event) => {
       // 只接受来自同源的消息
@@ -382,6 +409,15 @@
       }
 
       console.log('[IFRAME-MSG] 收到消息:', event.data);
+
+      if (event.data.type === 'obsidian-ready') {
+        doocsReady = true;
+        return;
+      }
+      if (event.data.type === 'obsidian-import-ack') {
+        if (event.data.seq === importSeq) clearTimeout(importAckTimer);
+        return;
+      }
 
       if (event.data.type === 'GET_MARKDOWN') {
         // Doocs请求获取当前markdown

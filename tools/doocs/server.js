@@ -64,81 +64,88 @@ const proxyServer = http.createServer((req, res) => {
         const injectedScript = `
 <script>
 (function() {
-  console.log('[Obsidian Init] 检查导入内容...');
-  
-  let content = localStorage.getItem('_obsidian_import_content');
-  let filename = localStorage.getItem('_obsidian_import_filename');
-  let lastImportId = null;
-  
-  // 🔧 如果 localStorage 没有，尝试从 3000 读取暂存内容
-  if (!content) {
-    console.log('[Obsidian Init] 从 3000 读取最新暂存内容');
-    fetch('http://127.0.0.1:3000/api/doocs/import-data', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(data => {
-        if (data.content) {
-          console.log('[Obsidian Init] 获取新内容，importId:', data.importId);
-          content = data.content;
-          filename = data.filename;
-          lastImportId = data.importId;
-          fillEditor();
-        } else {
-          console.log('[Obsidian Init] 暂存区无新内容');
-        }
-      })
-      .catch(e => {
-        console.log('[Obsidian Init] 读取暂存失败（正常，可能是首次或跨域问题）:', e.message);
-        fillEditor();  // 仍尝试从 localStorage 填充
-      });
-  } else {
-    console.log('[Obsidian Init] localStorage 中已有内容，等待 1 秒确保 Doocs 应用挂载后填充');
-    setTimeout(() => {
-      console.log('[Obsidian Init] localStorage 路径：开始填充编辑器');
-      fillEditor();
-    }, 1000);
-  }
-  
+  const PARENT_ORIGIN = 'http://127.0.0.1:3000';
   const CM_SELECTOR = '.cm-editor .cm-content[contenteditable="true"]';
-  function probeOk(cm) {
-    const last = content.split('\\n').map(l => l.trim()).filter(Boolean).pop();
+  let gen = 0;
+  
+  
+  const bootToken = ++gen;
+  console.log('[Obsidian Init] 从 3000 读取最新暂存内容');
+  fetch('http://127.0.0.1:3000/api/doocs/import-data', {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' }
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      if (bootToken !== gen) return;
+      if (data.content) {
+        console.log('[Obsidian Init] 获取新内容，importId:', data.importId);
+        fillEditor(bootToken, data.content);
+      } else {
+        console.log('[Obsidian Init] 暂存区无新内容');
+        waitForEditorThenReady();
+      }
+    })
+    .catch(e => {
+      console.log('[Obsidian Init] 读取暂存失败（正常，可能是首次或跨域问题）:', e.message);
+      if (bootToken === gen) waitForEditorThenReady();
+    });
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== PARENT_ORIGIN || !event.data || event.data.type !== 'obsidian-import') return;
+    const token = ++gen;
+    window.parent.postMessage({ type: 'obsidian-import-ack', seq: event.data.seq }, PARENT_ORIGIN);
+    if (event.data.content) fillEditor(token, event.data.content);
+  });
+  
+  function probeOk(cm, text) {
+    const last = text.split('\\n').map(l => l.trim()).filter(Boolean).pop();
     if (!last) return false;
     return cm.textContent.includes(last.slice(-20));
   }
-  function writeCM(cm) {
+  function writeCM(cm, text) {
     cm.focus();
     const range = document.createRange();
     range.selectNodeContents(cm);
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-    return document.execCommand('insertText', false, content);
+    return document.execCommand('insertText', false, text);
   }
-  function guardCM(ticks, stable) {
-    if (ticks >= 6 || stable >= 2) return;
+  function guardCM(token, text, ticks, stable) {
+    if (token !== gen || ticks >= 6 || stable >= 2) return;
     setTimeout(() => {
+      if (token !== gen) return;
       const cm = document.querySelector(CM_SELECTOR);
       if (!cm || !cm.isConnected || cm.offsetParent === null) return;
-      const ok = probeOk(cm);
+      const ok = probeOk(cm, text);
       if (!ok) {
         console.log('[Obsidian Init] 内容被覆盖，第 ' + (ticks + 1) + ' 次重写');
-        writeCM(cm);
+        writeCM(cm, text);
       }
-      guardCM(ticks + 1, ok ? stable + 1 : 0);
+      guardCM(token, text, ticks + 1, ok ? stable + 1 : 0);
     }, 500);
+  }
+  function waitForEditorThenReady() {
+    const cm = document.querySelector(CM_SELECTOR);
+    if (cm && cm.isConnected) {
+      console.log('[Obsidian Init] CM6 已挂载，发送 obsidian-ready');
+      window.parent.postMessage({ type: 'obsidian-ready' }, PARENT_ORIGIN);
+      return;
+    }
+    setTimeout(waitForEditorThenReady, 300);
   }
 
   // 🔧 完整的 fillEditor 实现（支持多种编辑器）
-  function fillEditor() {
-    if (!content) {
+  function fillEditor(token, text) {
+    if (!text) {
       console.log('[Obsidian Init] 无导入内容，停止填充');
       return;
     }
+    const content = text;
     
     console.log('[Obsidian Init] 开始填充编辑器，内容长度:', content.length);
     
@@ -146,6 +153,7 @@ const proxyServer = http.createServer((req, res) => {
     const maxAttempts = 50;  // 🔧 最多重试 50 次（25 秒）
     
     const tryFill = () => {
+      if (token !== gen) return;
       attempts++;
       if (attempts <= 3 || attempts % 10 === 0) {
         console.log('[Obsidian Init] 第 ' + attempts + '/' + maxAttempts + ' 次尝试查找编辑器，当前内容长度: ' + content.length);
@@ -156,8 +164,8 @@ const proxyServer = http.createServer((req, res) => {
       // 🔧 策略 1a: CodeMirror 6，经输入管线写入以同步编辑器状态
       const cm6Content = document.querySelector(CM_SELECTOR);
       if (cm6Content && cm6Content.isConnected && cm6Content.offsetParent !== null) {
-        writeCM(cm6Content);
-        if (probeOk(cm6Content)) {
+        writeCM(cm6Content, content);
+        if (probeOk(cm6Content, content)) {
           console.log('[Obsidian Init] ✅ CM6 输入管线写入成功，内容长度:', content.length);
           targetEditor = cm6Content;
         }
@@ -213,12 +221,11 @@ const proxyServer = http.createServer((req, res) => {
         }
       }
       
-      // 🔧 成功填充则记录 importId 并清空 localStorage
+      // 成功填充后通知父页面，并启动防覆盖守卫
       if (targetEditor) {
-        console.log('[Obsidian Init] ✅✅✅ 内容填充成功，importId:', lastImportId, '，内容长度:', content.length);
-        localStorage.removeItem('_obsidian_import_content');
-        localStorage.removeItem('_obsidian_import_filename');
-        guardCM(0, 0);
+        console.log('[Obsidian Init] ✅✅✅ 内容填充成功，内容长度:', content.length);
+        window.parent.postMessage({ type: 'obsidian-ready' }, PARENT_ORIGIN);
+        guardCM(token, content, 0, 0);
         return true;
       }
       
@@ -279,7 +286,7 @@ proxyServer.listen(proxyPort, '127.0.0.1', () => {
   console.log(`🔌 Doocs 实际端口: ${actualPort}`);
   console.log(`\nℹ️  功能:`);
   console.log(`   - 在 Doocs 页面中自动填充 Obsidian 文件内容`);
-  console.log(`   - 从 localStorage 读取: _obsidian_import_content`);
+  console.log(`   - 从 3000 端口 /api/doocs/import-data 读取导入内容，并接收 obsidian-import 消息`);
   console.log(`\n`);
 });
 
