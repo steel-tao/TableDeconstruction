@@ -3,6 +3,106 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Obsidian 文章面板：仅在 8800 顶层页面生效，读取 3000 只读接口的文章，并复制正文到剪贴板供粘贴到 Doocs 编辑器
+const obsidianPanelScript = `
+<script>
+(function() {
+  if (window.top !== window) return;
+  const API = 'http://127.0.0.1:3000/api/obsidian';
+  let files = [];
+  let checks = [];
+  let selectAllOn = false;
+
+  function el(tag, text, parent) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function fetchJson(url) {
+    return fetch(url).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  const btn = el('button', '导入 Obsidian', document.body);
+  btn.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:2147483000;padding:8px 12px;border:1px solid #888;border-radius:6px;background:#fff;color:#222;cursor:pointer;font-size:13px;';
+
+  const panel = el('div', undefined, document.body);
+  panel.style.cssText = 'display:none;position:fixed;right:20px;bottom:64px;z-index:2147483000;width:380px;max-height:60vh;overflow:auto;background:#fff;color:#222;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:12px;font-size:13px;';
+  const heading = el('div', 'Obsidian 文章导入（桌面解构）', panel);
+  heading.style.cssText = 'font-weight:600;margin-bottom:8px;';
+  const msg = el('div', '', panel);
+  msg.style.cssText = 'color:#666;margin-bottom:8px;min-height:16px;';
+  const listBox = el('div', '', panel);
+  const bar = el('div', '', panel);
+  bar.style.cssText = 'display:flex;gap:8px;margin-top:10px;';
+  const btnAll = el('button', '全选', bar);
+  const btnCopy = el('button', '复制正文', bar);
+  const btnClose = el('button', '关闭', bar);
+  [btnAll, btnCopy, btnClose].forEach(function(b) { b.style.cssText = 'padding:4px 10px;cursor:pointer;'; });
+
+  function render() {
+    const prev = {};
+    checks.forEach(function(c) { prev[c.file.path] = c.cb.checked; });
+    listBox.textContent = '';
+    checks = [];
+    files.forEach(function(file) {
+      const row = el('label', undefined, listBox);
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #eee;';
+      const cb = el('input', undefined, row);
+      cb.type = 'checkbox';
+      cb.checked = prev[file.path] === true;
+      const name = el('span', file.title, row);
+      name.style.flex = '1';
+      name.title = file.path;
+      checks.push({ cb: cb, file: file });
+    });
+    msg.textContent = files.length ? '共 ' + files.length + ' 篇' : '没有找到 .md 文件';
+  }
+
+  function loadList() {
+    msg.textContent = '读取中...';
+    return fetchJson(API + '/list').then(function(data) {
+      files = data.files;
+      render();
+    }).catch(function(err) {
+      listBox.textContent = '';
+      msg.textContent = '读取失败，请确认 3000 服务已启动（' + err.message + '）';
+    });
+  }
+
+  btn.onclick = function() {
+    const open = panel.style.display !== 'none';
+    panel.style.display = open ? 'none' : 'block';
+    if (!open) loadList();
+  };
+  btnClose.onclick = function() { panel.style.display = 'none'; };
+  btnAll.onclick = function() {
+    selectAllOn = !selectAllOn;
+    checks.forEach(function(c) { c.cb.checked = selectAllOn; });
+  };
+  btnCopy.onclick = function() {
+    const selected = checks.filter(function(c) { return c.cb.checked; }).map(function(c) { return c.file; });
+    if (selected.length === 0) { msg.textContent = '请先勾选一篇文章'; return; }
+    if (selected.length > 1) { msg.textContent = '一次只能复制一篇，当前勾选了 ' + selected.length + ' 篇'; return; }
+    const file = selected[0];
+    btnCopy.disabled = true;
+    msg.textContent = '读取正文中...';
+    fetchJson(API + '/file?path=' + encodeURIComponent(file.path)).then(function(detail) {
+      return navigator.clipboard.writeText(detail.content).then(function() {
+        msg.textContent = '已复制《' + file.title + '》（' + detail.content.length + ' 字符），请到编辑器中粘贴';
+      });
+    }).catch(function(err) {
+      msg.textContent = '复制失败：' + err.message;
+    }).finally(function() {
+      btnCopy.disabled = false;
+    });
+  };
+})();
+</script>
+`;
+
 // 启动 Doocs CLI
 let doocProcess;
 let doocPort = 52269; // 默认尝试这个端口
@@ -255,7 +355,7 @@ const proxyServer = http.createServer((req, res) => {
 `;
         
         // 在 </body> 前注入脚本
-        body = body.replace('</body>', injectedScript + '</body>');
+        body = body.replace('</body>', injectedScript + obsidianPanelScript + '</body>');
         
         // 设置新的响应头，删除原始的 Content-Length
         const headers = { ...proxyRes.headers };

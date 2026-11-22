@@ -154,6 +154,54 @@ app.post('/api/doocs/import', (req, res) => {
   }
 });
 
+// Obsidian 批量导入只读接口（供 8800 顶层页面使用）
+const OBSIDIAN_CORS_ORIGIN = 'http://127.0.0.1:8800';
+
+const listVaultMarkdown = (dir, prefix = '', out = []) => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith('.')) continue;
+    const fullPath = path.join(dir, entry.name);
+    const relPath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      listVaultMarkdown(fullPath, relPath, out);
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      const stats = fs.statSync(fullPath);
+      out.push({ path: relPath, title: entry.name.slice(0, -3), mtime: stats.mtimeMs, size: stats.size });
+    }
+  }
+  return out;
+};
+
+// 将相对路径解析到 Vault 内的 .md 文件；越界或非 .md 返回 null
+const resolveVaultFile = (relPath) => {
+  const fullPath = path.resolve(VAULT_PATH, relPath);
+  if (!fullPath.startsWith(VAULT_PATH + path.sep) || !fullPath.endsWith('.md')) return null;
+  return fullPath;
+};
+
+app.get('/api/obsidian/list', (req, res) => {
+  res.header('Access-Control-Allow-Origin', OBSIDIAN_CORS_ORIGIN);
+  try {
+    res.json({ files: listVaultMarkdown(VAULT_PATH) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/obsidian/file', (req, res) => {
+  res.header('Access-Control-Allow-Origin', OBSIDIAN_CORS_ORIGIN);
+  const relPath = String(req.query.path || '');
+  const fullPath = resolveVaultFile(relPath);
+  if (!fullPath || !fs.existsSync(fullPath)) {
+    return res.status(404).json({ error: 'not found' });
+  }
+  try {
+    res.json({ path: relPath, content: fs.readFileSync(fullPath, 'utf-8') });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 🆕 GET /api/doocs/import-data - 供 8800 读取暂存内容（带 CORS 头）
 app.get('/api/doocs/import-data', (req, res) => {
   // 🆕 CORS 响应头：允许 8800 跨源访问
