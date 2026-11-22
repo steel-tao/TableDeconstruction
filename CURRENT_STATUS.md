@@ -160,7 +160,7 @@ WECHAT_MODE: real ✅ 配置完成
 
 ## ⚠️ Doocs 编辑器说明
 
-**当前状态**: 未启动（可选组件）
+**当前状态**: 由 `start-p1.ps1` 启动（8800，`node tools/doocs/server.js`）
 
 Doocs 编辑器是可选的 Web 排版工具。系统提供以下两种方式：
 
@@ -170,11 +170,9 @@ Doocs 编辑器是可选的 Web 排版工具。系统提供以下两种方式：
 3. 粘贴到外部 Doocs（如 https://doocs.qiniu.com）进行排版
 4. 排版完成后保存
 
-**方式 2 - 本地 Doocs（可选）**:
-- 需要单独安装和启动 Doocs
-- 命令: `npx @doocs/md-cli` 或 Docker 部署
-- 访问: http://localhost:55885
-- 目前系统启动脚本中暂未集成本地 Doocs
+**方式 2 - 本地 Doocs（8800）**:
+- 随 `start-p1.ps1` 一并启动，访问: http://127.0.0.1:8800
+- 启动链与用法详见 `tools/doocs/README.md`
 
 ---
 
@@ -190,13 +188,9 @@ Doocs 编辑器是可选的 Web 排版工具。系统提供以下两种方式：
 - **解决**: 使用 `Stop-Process -Name node -Force` 强制停止
 - **状态**: 已确认此为正常行为
 
-### Doocs 编辑器未启动（55885）
-- **原因**: 本地 Doocs 是可选组件，启动脚本中暂未集成
-- **影响**: 文件仍可编辑，只是不能在本地使用 Doocs 排版工具
-- **解决方案**:
-  - 方案 A: 在文件管理器复制内容，粘贴到在线 Doocs (https://doocs.qiniu.com)
-  - 方案 B: 单独部署本地 Doocs (`npx @doocs/md-cli`)
-  - 方案 C: 使用 Docker: `docker run -p 55885:55885 geekdada/doocs`
+### Doocs 微信发布链路未通（8800）
+- **现状**: 8800 可单独发布到草稿箱；3000 内嵌 Doocs 的发布不通（`window.$syncer` 仅在 8800 顶层页面可用）
+- **详见**: `docs/03-reports/DOOCS_WECHAT_HANDOFF.md`
 - **优先级**: 低（系统主要功能不受影响）
 
 ---

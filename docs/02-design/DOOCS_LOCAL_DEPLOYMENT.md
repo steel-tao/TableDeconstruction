@@ -27,12 +27,13 @@ Doocs 可以通过官方 `@doocs/md-cli` 在本机运行。当前项目采用隔
 
 ## 启动方式
 
+8800 由 `start-p1.ps1` 启动，等价于直接运行：
+
 ```powershell
-npm install --prefix tools/doocs @doocs/md-cli
-node tools/doocs/node_modules/@doocs/md-cli/index.js --port 8899
+node tools/doocs/server.js
 ```
 
-CLI 会在端口被占用时自动选择可用端口，必须以控制台最终输出的地址为准。
+`tools/doocs/server.js` 代理 md-cli 子进程并在顶层页注入 Obsidian 面板；不要直接运行 md-cli 的 CLI，否则没有面板。
 
 ## CSS 策略
 

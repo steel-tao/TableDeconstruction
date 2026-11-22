@@ -3,7 +3,7 @@
 **测试日期**: 2025-01-15  
 **测试环境**: Windows PowerShell 5.1, Node.js v24.14.1  
 **Doocs 版本**: @doocs/md-cli@2.1.3  
-**Doocs 本地服务**: http://127.0.0.1:55885 (运行正常)
+**Doocs 本地服务**: http://127.0.0.1:8800 (运行正常)
 
 ---
 
@@ -125,7 +125,7 @@
 ```
 1. 从 Obsidian Vault 读取 Markdown 文件 (G:\Obsidian\wechat\桌面解构\...)
                     ↓
-2. 复制内容到 Doocs 编辑器 (http://127.0.0.1:55885)
+2. 复制内容到 Doocs 编辑器 (http://127.0.0.1:8800)
                     ↓
 3. 实时预览微信排版效果
                     ↓

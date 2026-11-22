@@ -22,17 +22,13 @@ npm install --prefix tools/doocs @doocs/md-cli
 
 ## 启动
 
+8800 由 `start-p1.ps1` 启动，等价于：
+
 ```powershell
-node tools/doocs/node_modules/@doocs/md-cli/index.js --port 8899
+node tools/doocs/server.js
 ```
 
-启动后访问控制台输出的本地地址，例如：
-
-```text
-http://127.0.0.1:8899
-```
-
-如果 `8899` 已被占用，CLI 会自动切换端口，以实际控制台输出为准。
+`server.js` 会拉起 md-cli 子进程（端口由 `server.js` 决定），并代理到 `http://127.0.0.1:8800`。直接运行 md-cli CLI 不会注入 Obsidian 面板。
 
 ## 自定义 CSS 说明
 

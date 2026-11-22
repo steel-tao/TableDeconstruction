@@ -195,7 +195,7 @@ const markdown = await vaultReader.exportMarkdown(selected.filename);
     "path": "G:\\Obsidian\\wechat\\桌面解构"
   },
   "doocs": {
-    "localUrl": "http://127.0.0.1:55885",
+    "localUrl": "http://127.0.0.1:8800",
     "themes": ["blue", "orange", "grace", "simple"]
   },
   "wechat": {

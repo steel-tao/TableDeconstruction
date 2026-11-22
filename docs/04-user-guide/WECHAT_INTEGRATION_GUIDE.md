@@ -280,7 +280,7 @@ npm run test:wechat-api
 ```bash
 # 该问题已在最新版本修复
 # 如仍遇到，请重启 Doocs 服务
-npm run start:doocs
+node tools/doocs/server.js
 ```
 
 ## 🔗 相关文件

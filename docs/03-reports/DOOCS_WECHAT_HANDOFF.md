@@ -119,6 +119,20 @@
 
 ## 11. 调查日志（每步更新，按时间追加）
 
+### 21:0x 启动链普查与残留清理（已执行，未提交）
+- 依据：用户要求确认哪些启动链真正被使用，并清除 55885 时代残留。
+- 已证实（grep + 读取）：
+  - 真实启动链见 §12。`start-p1.ps1` 不执行。
+  - 55885 系列（`start.cjs`、`start-prod.*`、`proxy-server.cjs`、`config.js`、`start-with-local-storage.cjs`、`*.prod.js`）仅被自身及 `start-services.ps1` / `start-all-services.cjs` 引用，无活跃入口引用。
+  - `RUN.bat` 直接启动 md-cli 于 8800，绕过面板，属残留。
+- 已执行删除（`git rm`）：`tools/doocs/start.cjs`、`start-prod.cjs`、`start-prod.js`、`start-prod.mjs`、`proxy-server.cjs`、`config.js`、`start-with-local-storage.cjs`、`local-storage-adapter.prod.js`、`local-storage-api.prod.js`、`RUN.bat`；`scripts/start-all-services.cjs`、`scripts/start-services.ps1`。另删除 gitignored 的 `tools/doocs/logs/`。
+- 已执行 package.json 清理：根 `package.json` 删除 `start-all`、`start:doocs`；`tools/doocs/package.json` 删除 `scripts` 块，保留 `@doocs/md-cli` 依赖。
+- 已执行文档与提示更新：`src/obsidian-to-doocs.js:187`（提示改为 `node tools/doocs/server.js`）、`docs/02-design/DOOCS_LOCAL_DEPLOYMENT.md`（启动方式）、`tools/doocs/README.md`（启动）、`docs/04-user-guide/WECHAT_INTEGRATION_GUIDE.md`（`start:doocs` → `node tools/doocs/server.js`）、`docs/03-reports/DOOCS_CAPABILITY_REPORT.md`、`docs/03-reports/PHASE_0.2_END_TO_END_WORKFLOW.md`、`docs/02-design/PHASE_0.2_ROADMAP.md`、`docs/02-design/DOCUMENT_TYPE_CLASSIFICATION.md`、`CURRENT_STATUS.md`（55885 / “未启动” → 8800 / 由 `start-p1.ps1` 启动）。
+- 校验：两个 package.json 可解析；`node --check src/obsidian-to-doocs.js` 通过。
+- 残留 grep（排除 node_modules、.git）：仅 `PRODUCT_DELIVERY_CHECKLIST.md` 保留 55885 历史记录，属有意保留。
+- 未删除（已证实仍活跃，待用户裁决）：`tools/doocs/local-storage-adapter.js`、`tools/doocs/local-storage-api.js`，见 §12。
+- 未重启服务，未提交，未推送。
+
 ### 2026-11-22 B+D 实施：移除 IDB 直写，改为“复制正文”
 - 裁决（用户）：选 B + D，暂缓 C。
   - D：移除 `runImport` / `putRecord` / `openDb` / `computeStatuses` / `loadMap` / `saveMap`，面板不再写 `doocs-md` / `documents`。
@@ -423,3 +437,46 @@
 - 已证实（截图）：请求 `/api/obsidian/file?path=` 对“04 安全篇”文件返回 200，长度 4244，返回 JSON 含 `path` 与 `content` 字段。
 - 结论（已证实）：8800 页面到 3000 的 Obsidian 读取链路可用。
 - 未证实：悬浮面板自身的导入函数是否执行过该请求；写入 IDB 失败的位置仍未定位。
+
+## 12. 启动链普查报告（只读，21:0x）
+
+### 12.1 真实运行启动链（已证实）
+- 3000（文件管理器）：`start-p1.ps1` → `npm run start:file-manager` → `tools/file-manager/start.cjs`，监听 127.0.0.1:3000。
+- 8800（Doocs 代理 + 面板）：`start-p1.ps1` → `node tools/doocs/server.js`。`tools/doocs/server.js` 为原生 `http` 代理（约 :139），并以子进程启动 md-cli（约 :112–114，`node_modules/@doocs/md-cli/index.js`）。面板注入位于约 :7（面板）、:10（顶层守卫）、:85（`btnCopy`）、:168（CM 选择器）、:174（导入数据拉取）、:216（`execCommand('insertText')`）、:358（注入）。
+- 3001（后端）：`start-p1.ps1` → `npm run start:server` → `start-server.mjs` → `dist/server.js`。
+- `start-p1.ps1` 启动前会先杀掉 3001 / 3000 / 8800（约第 9 行）。
+
+### 12.2 md-cli 注入链（已证实，上游包，不修改）
+- `tools/doocs/node_modules/@doocs/md-cli/server.js:155` 从 `https://md.doocs.org/` 取 HTML；`:160–161` 在 `</head>` 前注入 `<script src="/local-storage-adapter.js">`。
+- `:86–92` 提供 `/local-storage-adapter.js`，文件来自 `tools/doocs/local-storage-adapter.js`。
+- `:21` 动态 import `tools/doocs/local-storage-api.js`，`:83` 挂载到 `/api/storage`。
+- 实测：8800 `/` 的 HTML 含 adapter 脚本标签；`GET /local-storage-adapter.js` 返回 200，12712 字节。
+
+### 12.3 仍活跃但未裁决的组件
+- `tools/doocs/local-storage-adapter.js`：运行于 `<head>`，早于 bundle；劫持 `indexedDB.open('doocs-md')`（约 185–217 行）与 `window.localStorage`（约 311 行），并同步到 `/api/storage`。其日志“从本地存储加载了 0 个文档”（约 44 行）与 §11 中“adapter 已被用户证据否定”的结论存在冲突，尚未调和。
+- `tools/doocs/local-storage-api.js`：`/api/storage` 后端，数据目录 `tools/doocs/local-storage/documents` 当前为空目录。3000 的 `/api/doocs/storage/*` 代理（`tools/file-manager/server.js:231`）转发至此。仓库内未找到前端调用方。
+- 删除上述任一项都会使注入脚本 404，并改变 `indexedDB.open` 行为。在 8800 做 A/B 测试前不得删除。
+- `src/server.ts:153,191` 在 3001 上另有 `/api/storage/*` 路由，调用方未核查。
+
+### 12.4 Doocs 存储机制（来自只读本地副本 `c:\Users\steel\Downloads\md-storage-B8GIogoY.js`，未修改）
+- `K` 为内存缓存，约 15269 行。
+- `lt()` 约 15755 行：删除 IDB 中不在输入集合里的键。
+- `ut()` 约 15984 行：单篇 put。`savePost` 约 16600 行使用 `ut`。
+- `saveAll` 约 16949 行使用 `lt`，这是删库根因。
+- `loadAll` 约 16562 行；`Ct()` 初始化约 19900 行以后。
+- pagehide 备份恢复路径 `ft` / `lt`（约 16378 行）的触发点尚未追踪。
+
+### 12.5 未验证项
+- adapter 在线上页面是否真正拦截 IDB 写入。
+- “空 md 先建”这一步能否去掉。
+- pagehide 备份的触发条件。
+- Doocs 自动保存路径。
+- `src/server.ts` 的 `/api/storage` 是否有调用方。
+
+### 12.6 架构方案（待用户拍板，未实施）
+- 方案 1：自动新建空文章并填入正文，省去手动建 md 一步。改动面涉及 Doocs 内部状态，稳定性待验证。
+- 方案 2：直接打开 8800 顶层页面操作（已可用，但与 3000 内嵌流程割裂）。改动最小。
+- 方案 3：经 A/B 测试后，清理 adapter / local-storage-api 残留链。需先确认其对线上行为的影响。
+
+### 12.7 本轮处置
+- 已清理的残留见 §11 最新条目。adapter / api 两项保留，等待用户决定。
