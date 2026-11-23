@@ -1,5 +1,10 @@
 # 🚀 P1 系统 v2.0 - 快速测试指南
 
+> **状态：已过时（写于 2026-11-18，未按当前现状核对）**
+> - "嵌入式 Doocs 发布"未实现：3000 内嵌发布不通，见 [CURRENT_STATUS.md](CURRENT_STATUS.md) §5。当前可用发布路径为 8800 顶层。
+> - "实时预览""一页式编辑"等描述未经验证，以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
+> - 启动命令 `start-p1.ps1 -Mode full` 与 `P1_CONTROL_PANEL.html` 的说明未经当前版本验证。
+
 **版本**: 2.0 (业务链贯通版)  
 **更新日期**: 2026-11-18  
 **核心改进**: 嵌入式 Doocs + 实时预览 + 一页式编辑
@@ -411,5 +416,4 @@ npm run build
 **现在就打开 http://127.0.0.1:3000/ 开始测试吧！** 🚀
 
 如有问题，请查阅详细文档：
-- [BUSINESS_PROCESS_GUIDE.md](./BUSINESS_PROCESS_GUIDE.md) - 业务流程指南
 - [README_P1.md](./README_P1.md) - 完整系统文档

@@ -163,11 +163,10 @@ npm test
 
 | 文档 | 说明 |
 |------|------|
+| [docs/README.md](docs/README.md) | 文档分类与维护规范 |
 | [CURRENT_STATUS.md](CURRENT_STATUS.md) | 项目现状的唯一记录（能力、业务流程、端口、Doocs 事实、阻塞） |
 | [docs/03-reports/DOOCS_WECHAT_HANDOFF.md](docs/03-reports/DOOCS_WECHAT_HANDOFF.md) | 窗口切换交接：待决策事项与下一步 |
 | [README_P1.md](README_P1.md) | 系统指南和 API 文档 |
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 快速参考卡 |
-| [HANDOVER_CHECKLIST.md](HANDOVER_CHECKLIST.md) | 系统交接清单 |
 
 ## 🏗️ 系统架构
 

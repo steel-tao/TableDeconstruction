@@ -11,7 +11,8 @@
  * 4. 发布到微信
  * 5. 查询发布历史
  * 
- * 使用 Mock API 演示，不需要真实微信账号
+ * 使用 Mock API 演示，不需要真实微信账号。
+ * 注意：本脚本不调用真实微信或 Doocs，不代表真实发布链路，现状见 CURRENT_STATUS.md。
  */
 
 const colors = {
