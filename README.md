@@ -84,7 +84,7 @@ weixin-content-management/
 
 ```powershell
 cd F:\TableDeconstruction
-.\start-p1.ps1
+.\start.ps1
 ```
 
 **预期输出**：
@@ -104,10 +104,10 @@ Files: http://localhost:3000
 
 | 组件 | 地址 | 功能 |
 |------|------|------|
-| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 |
+| **控制面板** | `CONTROL_PANEL.html` | 创建、审核、发布记录 |
 | **API 服务** | http://localhost:3001 | REST API |
 | **文件管理器** | http://localhost:3000 | Obsidian 选文、填充 Doocs 编辑器 |
-| **Doocs 编辑器** | http://127.0.0.1:8800 | 排版、悬浮面板复制、顶层发布（由 `start-p1.ps1` 启动） |
+| **Doocs 编辑器** | http://127.0.0.1:8800 | 排版、悬浮面板复制、顶层发布（由 `start.ps1` 启动） |
 
 **Doocs 与发布的现状**：8800 顶层发布可用；3000 内嵌发布未实现。详见 [CURRENT_STATUS.md](CURRENT_STATUS.md) §3、§5。
 
@@ -141,7 +141,7 @@ npm run start:file-manager   # 启动文件管理器
 ### 验证系统
 
 ```powershell
-.\verify-p1.ps1
+.\verify.ps1
 ```
 
 ### 停止系统
@@ -165,13 +165,13 @@ npm test
 | [docs/README.md](docs/README.md) | 文档分类与维护规范 |
 | [CURRENT_STATUS.md](CURRENT_STATUS.md) | 项目现状的唯一记录（能力、业务流程、端口、Doocs 事实、阻塞） |
 | [docs/03-reports/DOOCS_WECHAT_HANDOFF.md](docs/03-reports/DOOCS_WECHAT_HANDOFF.md) | 窗口切换交接：待决策事项与下一步 |
-| [README_P1.md](README_P1.md) | 系统指南和 API 文档 |
+| [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md) | 系统指南和 API 文档（未验证，见文件顶部标注） |
 
 ## 🏗️ 系统架构
 
 ```
 用户操作层
-├── P1_CONTROL_PANEL.html (控制面板)
+├── CONTROL_PANEL.html (控制面板)
 ├── 文件管理器 (http://localhost:3000)
 └── Doocs 编辑器 (http://127.0.0.1:8800)
          ↓

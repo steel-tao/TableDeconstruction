@@ -184,7 +184,7 @@ async function main() {
     if (!doocsReady) {
       console.error('❌ Doocs 服务不可用');
       console.log('💡 请先启动 Doocs:');
-      console.log('   node tools/doocs/server.js  (8800，由 start-p1.ps1 启动)\n');
+      console.log('   node tools/doocs/server.js  (8800，由 start.ps1 启动)\n');
       process.exit(1);
     }
 

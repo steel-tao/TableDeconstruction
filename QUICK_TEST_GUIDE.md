@@ -1,9 +1,9 @@
-# 🚀 P1 系统 v2.0 - 快速测试指南
+# 🚀 系统快速测试指南（v2.0）
 
 > **状态：已过时（写于 2026-11-18，未按当前现状核对）**
 > - "嵌入式 Doocs 发布"未实现：3000 内嵌发布不通，见 [CURRENT_STATUS.md](CURRENT_STATUS.md) §5。当前可用发布路径为 8800 顶层。
 > - "实时预览""一页式编辑"等描述未经验证，以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
-> - 启动命令 `start-p1.ps1 -Mode full` 与 `P1_CONTROL_PANEL.html` 的说明未经当前版本验证。
+> - 启动命令 `start.ps1 -Mode full` 与 `CONTROL_PANEL.html` 的说明未经当前版本验证。
 
 **版本**: 2.0 (业务链贯通版)  
 **更新日期**: 2026-11-18  
@@ -19,13 +19,13 @@
 
 ```powershell
 # 在 F:\TableDeconstruction 目录运行
-.\start-p1.ps1 -Mode full
+.\start.ps1 -Mode full
 
 # 确认以下 4 个服务已启动：
 ✓ [API]      Express API 服务器: http://127.0.0.1:3001
 ✓ [FILES]    文件管理器: http://127.0.0.1:3000
 ✓ [DOOCS]    Doocs 编辑器: http://127.0.0.1:8800
-✓ [PANEL]    控制面板: P1_CONTROL_PANEL.html
+✓ [PANEL]    控制面板: CONTROL_PANEL.html
 ```
 
 ### ✅ 编译验证
@@ -133,7 +133,7 @@ npm run build
 
 **进阶验证** (可选):
 ```
-1. 打开 P1_CONTROL_PANEL.html
+1. 打开 CONTROL_PANEL.html
 2. 在 "发布状态" 或 "记录管理" 板块
 3. 确认刚才保存的记录出现在列表中
 4. 状态应为 "草稿" 或 "待审核"
@@ -416,4 +416,4 @@ npm run build
 **现在就打开 http://127.0.0.1:3000/ 开始测试吧！** 🚀
 
 如有问题，请查阅详细文档：
-- [README_P1.md](./README_P1.md) - 完整系统文档
+- [SYSTEM_GUIDE.md](./SYSTEM_GUIDE.md) - 完整系统文档（未验证）

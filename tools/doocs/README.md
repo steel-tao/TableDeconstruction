@@ -22,7 +22,7 @@ npm install --prefix tools/doocs @doocs/md-cli
 
 ## 启动
 
-8800 由 `start-p1.ps1` 启动，等价于：
+8800 由 `start.ps1` 启动，等价于：
 
 ```powershell
 node tools/doocs/server.js

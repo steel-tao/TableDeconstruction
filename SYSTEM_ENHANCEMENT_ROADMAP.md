@@ -21,13 +21,13 @@
 **目标**: 用户在发布前能够看到实际的微信排版效果
 
 **技术方案**:
-- 在 `P1_CONTROL_PANEL.html` 中添加预览面板
+- 在 `CONTROL_PANEL.html` 中添加预览面板
 - 集成 Doocs 渲染结果显示（iframe 或 div）
 - 实时调用 `/api/doocs/render` 获取预览 HTML
 - 支持主题切换（default/wechat/dark）
 
 **核心改动**:
-- 文件: `P1_CONTROL_PANEL.html`
+- 文件: `CONTROL_PANEL.html`
   - 新增"预览"选项卡
   - 实时渲染预览区域
   - 显示最终微信格式效果
@@ -104,7 +104,7 @@
   - 新增 `theme_config` 表
   - 保存用户主题偏好
 
-- 文件: `P1_CONTROL_PANEL.html`
+- 文件: `CONTROL_PANEL.html`
   - 新增主题选择下拉菜单
   - 预览区实时切换主题
 
@@ -142,7 +142,7 @@
   - 新增 `POST /api/doocs/cache-clear` 端点
   - 新增 `GET /api/doocs/cache-info/:hash` 端点
 
-- 文件: `P1_CONTROL_PANEL.html`
+- 文件: `CONTROL_PANEL.html`
   - 添加缓存统计显示
   - 支持手动清理缓存按钮
 
@@ -191,7 +191,7 @@
 - [ ] 错误提示有帮助
 
 ### 文档完整性
-- [ ] 更新 README_P1.md
+- [ ] 更新 SYSTEM_GUIDE.md
 - [ ] 添加新功能的 API 文档
 - [ ] 提供使用示例
 
@@ -238,14 +238,14 @@ tools/file-manager/
   ├── public/index.html             # 添加发布按钮
   └── server.js                     # 新增发布端点
 
-P1_CONTROL_PANEL.html               # 预览、主题、缓存管理 UI
+CONTROL_PANEL.html                     # 预览、主题、缓存管理 UI
 
 resources/css/doocs-custom-theme.css  # 多套主题定义
 
 docs/                               # 文档更新
   └── SYSTEM_ENHANCEMENT_ROADMAP.md  # 本文件
 
-README_P1.md                        # 更新 API 文档和使用说明
+SYSTEM_GUIDE.md                        # 更新 API 文档和使用说明
 ```
 
 ---

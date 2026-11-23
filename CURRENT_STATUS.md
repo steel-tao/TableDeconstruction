@@ -21,17 +21,17 @@
 
 ## 2. 服务与启动
 
-| 服务 | 端口 | 启动命令（由 `start-p1.ps1` 调用） |
+| 服务 | 端口 | 启动命令（由 `start.ps1` 调用） |
 |---|---|---|
 | 文件管理器（父页面） | 3000 | `npm run start:file-manager`（`tools/file-manager/start.cjs`） |
 | 后端 API | 3001 | `npm run start:server`（`start-server.mjs` → `dist/server.js`） |
 | Doocs 代理 + 悬浮面板 | 8800 | `node tools/doocs/server.js` |
 | md-cli 子进程（8800 内部上游） | 52269 | 由 `tools/doocs/server.js` 拉起 |
 
-- 启动：`.\start-p1.ps1`，参数 `-Mode full|api|files`。服务输出写入 `logs/<服务名>.out.log` 与 `.err.log`；启动后按端口检查 30 秒。构建失败时不启动服务。
+- 启动：`.\start.ps1`，参数 `-Mode full|api|files`。服务输出写入 `logs/<服务名>.out.log` 与 `.err.log`；启动后按端口检查 30 秒。构建失败时不启动服务。
 - 停止：使用脚本输出的 PID，`Stop-Process -Id <PID> -Force`。
-- 验证：`.\verify-p1.ps1`。
-- 控制面板：`P1_CONTROL_PANEL.html`。
+- 验证：`.\verify.ps1`。
+- 控制面板：`CONTROL_PANEL.html`。
 
 ---
 
@@ -156,7 +156,7 @@
 
 - WeChat Token 获取（`/api/wechat/token`）、发布记录（SQLite `db.sqlite`，表 `publish_records`、`audit_logs`、`configs`）、Markdown 渲染、内容验证、文件监听自动发布（监听 Obsidian 目录）。
 - 对应代码：`src/services/`、`src/core/`、`src/db/`、`src/server.ts`。
-- API 端点以 [README_P1.md](README_P1.md) 为准。
+- API 端点以 [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md) 为准（该文档未经验证，使用前需对照 `src/routes/`）。
 
 ---
 

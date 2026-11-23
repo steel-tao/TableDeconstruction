@@ -1,14 +1,14 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 
 <#
 .SYNOPSIS
-    验证 P1 系统启动是否正常的测试脚本
+    验证系统启动是否正常的测试脚本
     
 .DESCRIPTION
     运行启动脚本后，使用此脚本验证所有系统功能是否正常
     
 .EXAMPLE
-    .\verify-p1.ps1
+    .\verify.ps1
 #>
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -44,7 +44,7 @@ function Test-Endpoint {
 }
 
 Write-Log "`n========================================" Info
-Write-Log "🔍 P1 系统验证脚本" Info
+Write-Log "系统验证脚本" Info
 Write-Log "========================================`n" Info
 
 # 检查端口
@@ -85,9 +85,9 @@ if ($apiOk -and $fileOk) {
     Write-Log "❌ 系统未正常启动，请检查启动脚本输出" Error
 }
 
-Write-Log "`n📱 访问地址：" Info
+Write-Log "`n访问地址：" Info
 Write-Log "  • API 文档:        http://localhost:3001" Info
 Write-Log "  • 文件管理器:      http://localhost:3000" Info
-Write-Log "  • 控制面板:        $($PWD)\P1_CONTROL_PANEL.html" Info
+Write-Log "  • 控制面板:        $($PWD)\CONTROL_PANEL.html" Info
 
 Write-Log "`n"

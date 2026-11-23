@@ -27,7 +27,7 @@ Doocs 可以通过官方 `@doocs/md-cli` 在本机运行。当前项目采用隔
 
 ## 启动方式
 
-8800 由 `start-p1.ps1` 启动，等价于直接运行：
+8800 由 `start.ps1` 启动，等价于直接运行：
 
 ```powershell
 node tools/doocs/server.js

@@ -45,7 +45,7 @@ foreach ($port in @(3001, 3000, 8800)) {
 }
 
 Write-Host ""
-Write-Host "Starting TableDeconstruction P1 with Doocs Integration..." -ForegroundColor Green
+Write-Host "Starting TableDeconstruction with Doocs Integration..." -ForegroundColor Green
 
 Write-Host "Building..."
 npm run build
@@ -94,7 +94,7 @@ Write-Host "Services:" -ForegroundColor Cyan
 Write-Host "  [DOOCS]   Doocs Editor:    http://127.0.0.1:8800"
 Write-Host "  [API]     API Server:      http://127.0.0.1:3001"
 Write-Host "  [FILES]   File Manager:    http://127.0.0.1:3000"
-Write-Host "  [PANEL]   Control Panel:   file:///$($root.Replace('\', '/'))/P1_CONTROL_PANEL.html"
+Write-Host "  [PANEL]   Control Panel:   file:///$($root.Replace('\', '/'))/CONTROL_PANEL.html"
 Write-Host ""
 Write-Host "PIDs started by this script: $($servicePids -join ', ')" -ForegroundColor Yellow
 Write-Host "To stop: Stop-Process -Id <PID> -Force  (the PIDs above)" -ForegroundColor Yellow

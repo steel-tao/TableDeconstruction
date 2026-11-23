@@ -14,7 +14,7 @@
 要点：
 - 已通：3000 选文章填充编辑器；8800 顶层发布到草稿箱。
 - 不通：3000 内嵌 Doocs 发布。“未检测到插件”只是弹窗提示，真正影响的是 `window.$cose` 是否可用。
-- 约束：不改 Doocs 打包文件；不运行 `start-p1.ps1`；不读 `.env`；不读文章正文。
+- 约束：不改 Doocs 打包文件；不运行 `start.ps1`；不读 `.env`；不读文章正文。
 
 ---
 
@@ -22,7 +22,7 @@
 
 - 用户用中文交流，称助手为 Coco。
 - 代码改动、提交（commit）、推送（push）、重启服务，均需事先获得用户明确批准。
-- 不运行 `start-p1.ps1`（会杀掉 3001 / 3000 / 8800）。
+- 不运行 `start.ps1`（会杀掉 3001 / 3000 / 8800）。
 - 不修改 Doocs 打包文件 `tools/doocs/node_modules/@doocs/md-cli/dist/static/js/md-index-Cl1Uh28s.js`、整个 `node_modules/@doocs/md-cli/`、COSE 扩展文件、`.env`。
 - 不读取 `.env`，不读取 Obsidian 文章正文（只能用标题）。
 - 结论必须有证据；区分“已验证”与“推测”。

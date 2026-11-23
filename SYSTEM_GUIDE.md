@@ -1,8 +1,8 @@
-# 🎯 TableDeconstruction P1 系统 - 完整指南
+# 🎯 TableDeconstruction 系统 - 完整指南
 
 > **状态：未验证，部分内容已过时。**
 > - "生产就绪"结论无依据，已删除其效力。当前现状以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
-> - 下文 API 端点列表与启动流程未经当前版本核对，使用前须对照 `src/routes/` 与 `start-p1.ps1`。
+> - 下文 API 端点列表与启动流程未经当前版本核对，使用前须对照 `src/routes/` 与 `start.ps1`。
 > - 3000 内嵌发布未实现（见 CURRENT_STATUS §5）。
 
 **最后更新**: 2026-11-18  
@@ -28,13 +28,13 @@
 
 ```powershell
 # 完整启动（API + 文件管理器）
-.\start-p1.ps1 -Mode full
+.\start.ps1 -Mode full
 
 # 仅启动 API
-.\start-p1.ps1 -Mode api
+.\start.ps1 -Mode api
 
 # 仅启动文件管理器
-.\start-p1.ps1 -Mode files
+.\start.ps1 -Mode files
 ```
 
 ### 手动启动
@@ -52,7 +52,7 @@ npm run start:file-manager
 
 ### 访问系统
 
-- **控制面板**: 打开文件 `P1_CONTROL_PANEL.html`
+- **控制面板**: 打开文件 `CONTROL_PANEL.html`
 - **API 文档**: http://localhost:3001/
 - **文件管理器**: http://localhost:3000/
 
@@ -64,7 +64,7 @@ npm run start:file-manager
 ┌─────────────────────────────────────────────────────────┐
 │                   用户交互层                             │
 ├─────────────────────────────────────────────────────────┤
-│  P1_CONTROL_PANEL.html  │  文件管理器 (3000)           │
+│  CONTROL_PANEL.html     │  文件管理器 (3000)           │
 │      (本地 HTML)        │   (Web UI)                   │
 └──────────────┬──────────────────────────┬───────────────┘
                │                          │
@@ -130,7 +130,7 @@ DB_PATH=./db.sqlite
 
 ```powershell
 # 使用启动脚本（推荐）
-.\start-p1.ps1 -Mode full
+.\start.ps1 -Mode full
 
 # 或手动启动
 npm run build
@@ -143,12 +143,12 @@ npm run start:file-manager  # 新终端
 在浏览器中访问：
 - http://localhost:3001/ - 应该看到 API JSON 文档
 - http://localhost:3000/ - 应该看到文件管理器
-- 打开 `P1_CONTROL_PANEL.html` - 应该看到控制面板
+- 打开 `CONTROL_PANEL.html` - 应该看到控制面板
 
 ### 步骤 5: 完整工作流测试
 
 #### 使用控制面板：
-1. 打开 `P1_CONTROL_PANEL.html`
+1. 打开 `CONTROL_PANEL.html`
 2. 填写文章标题和内容
 3. 点击"创建"
 4. 获得记录 ID
@@ -437,8 +437,8 @@ TableDeconstruction/
 ├── tools/
 │   ├── file-manager/          # 文件管理器 UI
 │   └── doocs/                 # Doocs 集成
-├── P1_CONTROL_PANEL.html      # 操作面板
-├── start-p1.ps1              # 启动脚本
+├── CONTROL_PANEL.html         # 操作面板
+├── start.ps1                 # 启动脚本
 └── package.json
 ```
 
