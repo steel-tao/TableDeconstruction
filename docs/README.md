@@ -7,12 +7,12 @@
 | 入口 | 根目录 `README.md` | 项目简介、启动方式、文档索引；不写现状细节 |
 | 现状 | 根目录 `CURRENT_STATUS.md` | 能力、业务流程、端口、Doocs 事实、阻塞证据。**唯一现状记录** |
 | 交接 | `docs/03-reports/*HANDOFF*.md` | 切换窗口用。只写待决策事项、约定、下一步；不复述现状 |
-| 需求 | `docs/01-requirements/` | 需求与范围 |
+| 需求 | `docs/01-requirements/` | 需求与范围（目前无文档，需要时创建） |
 | 设计 | `docs/02-design/` | 设计方案、规划（含未落地的 roadmap） |
 | API | `docs/03-api/` | 接口定义 |
 | 报告 | `docs/03-reports/` | 一次性调查或验证结果，须写日期、方法与结论 |
 | 用户指南 | `docs/04-user-guide/` | 面向操作人员的步骤 |
-| 部署 | `docs/05-deployment/` | 环境与部署说明 |
+| 部署 | `docs/05-deployment/` | 环境与部署说明（目前无文档，需要时创建） |
 
 ## 2. 通用规则
 

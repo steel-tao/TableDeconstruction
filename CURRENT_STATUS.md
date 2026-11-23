@@ -144,6 +144,11 @@
 - 扩展 `hchobocdmclopcbnibdnoafilagadion` 打印 `[Extractor] ... SyntaxError: Unexpected end of JSON input`，不影响流程，来源未定位。
 - 终端中文显示乱码（PowerShell 编码），仅显示问题。
 - 测试：2026-11-19 记录 `npm test` 3/9 套件失败（源码 `.js` 扩展导入在 Jest 中无法解析），本次未复核。
+- Obsidian 导入面板未做项（来自 2026-11-22 落地标准，未验证）：
+  - `![[...]]` 图片引用未转换，属已知风险，后续单独评估。
+  - 发布回执与“已发布”自动标记未验证，当前仅考虑手动标记；不为测试而发布真实草稿。
+  - 面板状态使用 `localStorage`，未采用最初设计的 sidecar JSON；需要写入接口时再评估。
+- 微信在 Doocs 中的最终排版兼容性（外部图片、公式、Mermaid、复杂 HTML）未验证；发布仍保留 copy/paste 兜底。
 
 ---
 
@@ -152,3 +157,24 @@
 - WeChat Token 获取（`/api/wechat/token`）、发布记录（SQLite `db.sqlite`，表 `publish_records`、`audit_logs`、`configs`）、Markdown 渲染、内容验证、文件监听自动发布（监听 Obsidian 目录）。
 - 对应代码：`src/services/`、`src/core/`、`src/db/`、`src/server.ts`。
 - API 端点以 [README_P1.md](README_P1.md) 为准。
+
+---
+
+## 8. 独立能力（不在发布链路内）
+
+### 8.1 Vault CLI（已验证，2025-01-15 运行；数据量为当时值，未复核）
+- 实现：`src/services/vault-reader.js`（VaultReader）、`src/cli.js`（CLI）。
+- 命令（`package.json` 中的 `vault:*` 脚本）：
+  - `npm run vault:stats`
+  - `npm run vault:list [-- --series "系列名"] [-- --by-series] [-- --sort size|time] [-- --limit N]`
+  - `npm run vault:search -- "关键词" [--content]`
+  - `npm run vault:extract -- --file "文件名.md" [--output output.md]`
+  - `npm run vault:export`
+- 元数据由文件路径与正文自动计算，不依赖 frontmatter。
+
+### 8.2 Doocs 基础能力（已验证，2025-01-15，@doocs/md-cli 2.1.3，人工操作）
+- Copy 按钮复制微信兼容 HTML，成功通知文案：“Rendered content copied to clipboard. You can paste it directly into the WeChat backend.”
+- 左侧 Markdown、右侧实时预览；支持暗黑模式预览。
+- 已测语法：一至三级标题、粗体、有序列表、分隔线、引用、链接、代码块、中英文混排。
+- 刷新后内容保留（由 `localStorage` 恢复，见 §4.4）。
+- 本次记录早于 §3 B 面板与 §5 的调查，不覆盖其中的结论。

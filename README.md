@@ -26,11 +26,10 @@
 ```
 weixin-content-management/
 ├── docs/                          # 📚 项目文档
-│   ├── 01-requirements/          # 需求文档
 │   ├── 02-design/                # 设计文档
 │   ├── 03-api/                   # API文档
-│   ├── 04-user-guide/            # 用户指南
-│   └── 05-deployment/            # 部署文档
+│   ├── 03-reports/               # 报告与交接文档
+│   └── 04-user-guide/            # 用户指南
 ├── src/                           # 💻 源代码
 │   ├── core/                     # 核心业务逻辑
 │   │   ├── parser/              # Markdown解析器
