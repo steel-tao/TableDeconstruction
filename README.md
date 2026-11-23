@@ -7,37 +7,17 @@
 
 ## 🎯 快速了解
 
-**系统状态（2026-11-18）**：✅ **完全就绪 - 生产验证中**
+**当前状态**：Obsidian → 8800 编辑器 → 微信草稿箱的主流程可用（3000 选文填充、8800 顶层发布）；3000 内嵌发布未实现。详见 [CURRENT_STATUS.md](CURRENT_STATUS.md)。
 
 ```
 用户操作界面
-├── 控制面板 (HTML) → 创建记录 → 完整发布流程
-├── 文件管理器 (3000) → Obsidian 文件管理
-└── Doocs 编辑器 (可选) → 在线排版
+├── 文件管理器 (3000) → 选 Obsidian 文章，填充内嵌 Doocs 编辑器
+├── Doocs 编辑器 (8800) → 悬浮面板复制正文；顶层编辑后发布到草稿箱
            ↓
       API 服务器 (3001)
-      ├── P1: WeChat Token 获取 ✅
-      ├── P2: 发布记录管理 ✅
-      ├── P3: 内容渲染 ✅
-      ├── P4: 内容验证 ✅
-      └── P5: 自动发布 ✅
            ↓
-      SQLite 数据库 ✅
-      审计日志 ✅
-           ↓
-      WeChat API (Real Mode)
+      WeChat API
 ```
-
-**✅ 已完全实现和验证**：
-- 完整的发布流程（创建 → 审核 → 批准 → 发布）
-- WeChat 真实 API 集成（Token 获取、文章发布）
-- SQLite 数据库持久化和审计日志
-- 文件监听和自动发布（P5）
-- 内容验证和格式检查（P4）
-- Markdown 渲染到 HTML（P3）
-- 完整的 REST API（14+ 端点）
-- 一键启动脚本和验证工具
-- 生产就绪的系统架构
 
 ## 📦 项目结构
 
@@ -96,9 +76,7 @@ weixin-content-management/
 ├── package.json
 ├── tsconfig.json
 ├── jest.config.js
-├── PROJECT_PLAN.md              # 项目规划书
-├── IMPLEMENTATION_GUIDE.md      # 实施指南（待编写）
-└── CHANGELOG.md
+└── CHANGELOG.md                 # 若存在
 ```
 
 ## 🚀 快速开始
@@ -125,17 +103,14 @@ Files: http://localhost:3000
 
 ### 访问系统
 
-| 组件 | 地址 | 功能 | 状态 |
-|------|------|------|------|
-| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 | ✅ 运行中 |
-| **API 文档** | http://localhost:3001 | 完整 API 端点 | ✅ 运行中 |
-| **文件管理器** | http://localhost:3000 | Obsidian 文件管理 | ✅ 运行中 |
-| **Doocs 编辑器** | 可选部署 | 在线内容排版 | ⚠️ 未启动 |
+| 组件 | 地址 | 功能 |
+|------|------|------|
+| **控制面板** | `P1_CONTROL_PANEL.html` | 创建、审核、发布记录 |
+| **API 服务** | http://localhost:3001 | REST API |
+| **文件管理器** | http://localhost:3000 | Obsidian 选文、填充 Doocs 编辑器 |
+| **Doocs 编辑器** | http://127.0.0.1:8800 | 排版、悬浮面板复制、顶层发布（由 `start-p1.ps1` 启动） |
 
-**Doocs 编辑器说明**:
-- 当前系统已实现完整的文件管理和发布流程，不依赖本地 Doocs
-- 文件可以在文件管理器中复制，粘贴到外部 Doocs (https://doocs.qiniu.com) 进行排版
-- 如需本地 Doocs，可单独部署: `npx @doocs/md-cli`
+**Doocs 与发布的现状**：8800 顶层发布可用；3000 内嵌发布未实现。详见 [CURRENT_STATUS.md](CURRENT_STATUS.md) §3、§5。
 
 ### 完整业务流程验证
 
@@ -170,18 +145,12 @@ npm run start:file-manager   # 启动文件管理器
 .\verify-p1.ps1
 ```
 
-预期输出：
-```
-✓ API 服务器 (3001) - OK
-✓ 文件管理器 (3000) - OK
-✓ WeChat Token 获取 - OK
-🎉 系统完全就绪！所有服务正常运行。
-```
-
 ### 停止系统
 
+启动脚本会打印各服务 PID，按 PID 停止：
+
 ```powershell
-Stop-Process -Name node -Force
+Stop-Process -Id <PID> -Force
 ```
 
 ### 运行测试
@@ -190,19 +159,15 @@ Stop-Process -Name node -Force
 npm test
 ```
 
-所有测试应该通过：
-```
-8/8 tests passed ✅
-```
-
 ## 📚 核心文档
 
-| 文档 | 说明 | 更新状态 |
-|------|------|---------|
-| [README_P1.md](README_P1.md) | 完整系统指南和 API 文档 | ✅ 2026-11-18 |
-| [CURRENT_STATUS.md](CURRENT_STATUS.md) | 系统当前运行状态 | ✅ 2026-11-18 |
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 快速参考卡 | ✅ 2026-11-18 |
-| [HANDOVER_CHECKLIST.md](HANDOVER_CHECKLIST.md) | 系统交接清单 | ✅ 2026-11-18 |
+| 文档 | 说明 |
+|------|------|
+| [CURRENT_STATUS.md](CURRENT_STATUS.md) | 项目现状的唯一记录（能力、业务流程、端口、Doocs 事实、阻塞） |
+| [docs/03-reports/DOOCS_WECHAT_HANDOFF.md](docs/03-reports/DOOCS_WECHAT_HANDOFF.md) | 窗口切换交接：待决策事项与下一步 |
+| [README_P1.md](README_P1.md) | 系统指南和 API 文档 |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | 快速参考卡 |
+| [HANDOVER_CHECKLIST.md](HANDOVER_CHECKLIST.md) | 系统交接清单 |
 
 ## 🏗️ 系统架构
 

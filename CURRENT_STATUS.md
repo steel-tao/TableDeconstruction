@@ -1,276 +1,154 @@
-# ✅ P1 系统 - 当前运行状态 (2026-11-18 16:20)
+# 当前状态
 
-## 🚀 系统启动成功
-
-**启动时间**: 2026-11-18 16:08  
-**启动方式**: `.\start-p1.ps1`  
-**运行模式**: 完整模式 (API + 文件管理器)
+> 用途：项目现状的唯一记录。只写当前仍成立的内容，每条事实只出现一次。
+> 窗口切换的交接信息见 [DOOCS_WECHAT_HANDOFF.md](docs/03-reports/DOOCS_WECHAT_HANDOFF.md)。
 
 ---
 
-## 📊 运行进程概览
+## 1. 目标与能力状态
 
-| 进程 | PID | 内存占用 | 功能 |
-|------|-----|---------|------|
-| node | 924 | 63.33 MB | API 服务器 (3001) |
-| node | 41240 | 56.83 MB | 文件管理器 (3000) |
-| node | 42344 | 49.83 MB | 自动发布服务 |
-| node | 54768 | 47.12 MB | 数据库/WeChat 服务 |
-| node | 67400 | 47.82 MB | 其他后台服务 |
+目标：Obsidian 文章 → 8800（Doocs 编辑器）→ 微信公众号草稿箱。其中“在 3000 文件管理页内嵌 8800 完成发布”是目标，尚未实现。
 
-**总内存占用**: ~265 MB  
-**监听端口**: 3000, 3001
-
----
-
-## 🌐 访问地址
-
-| 服务 | 地址 | 状态 | 说明 |
-|------|------|------|------|
-| **API 文档** | http://localhost:3001 | ✅ 运行中 | Express API 服务器 |
-| **文件管理器** | http://localhost:3000 | ✅ 运行中 | Obsidian 文件管理 |
-| **Doocs 编辑器** | http://localhost:8800 | ✅ 运行中 | WeChat 排版编辑 |
-| **控制面板** | P1_CONTROL_PANEL.html | ✅ 就绪 | 本地 HTML 界面 |
+| 能力 | 状态 |
+|---|---|
+| 3000 选文章 → 填充内嵌 8800 编辑器 | 通过（截图验证，3644 字） |
+| 8800 顶层悬浮面板：复制正文 | 通过（用户验证） |
+| 8800 顶层发布到草稿箱 | 通过（用户验证） |
+| 3000 内嵌 8800 发布到草稿箱 | **未实现，阻塞**（见 §5） |
+| 启动后显示官方示例文章 | 未实施；现状为重启后显示上一篇（用户已接受） |
 
 ---
 
-## 📋 核心功能检查清单
+## 2. 服务与启动
 
-### P1: WeChat Token 获取
-- ✅ 实现完成
-- ✅ 真实 API 模式配置
-- AppSecret + IP 白名单: 108.171.103.61
-- 访问: `POST /api/wechat/token`
+| 服务 | 端口 | 启动命令（由 `start-p1.ps1` 调用） |
+|---|---|---|
+| 文件管理器（父页面） | 3000 | `npm run start:file-manager`（`tools/file-manager/start.cjs`） |
+| 后端 API | 3001 | `npm run start:server`（`start-server.mjs` → `dist/server.js`） |
+| Doocs 代理 + 悬浮面板 | 8800 | `node tools/doocs/server.js` |
+| md-cli 子进程（8800 内部上游） | 52269 | 由 `tools/doocs/server.js` 拉起 |
 
-### P2: 发布记录管理
-- ✅ 实现完成
-- ✅ 完整的 CRUD 操作
-- 数据库: SQLite (db.sqlite)
-- 访问: `/api/publish/records`
-
-### P3: 内容渲染
-- ✅ 实现完成
-- ✅ Markdown → HTML 转换
-- 库: marked 9.1.0
-- 支持主题: default, wechat, dark
-
-### P4: 内容验证
-- ✅ 实现完成
-- ✅ 8 点验证体系
-- 长度检查、敏感词过滤、格式验证等
-
-### P5: 自动发布
-- ✅ 实现完成
-- ✅ 文件监听 (Chokidar)
-- 监听目录: G:\Obsidian\wechat\桌面解构
-- 自动检测并发布 .md 文件
+- 启动：`.\start-p1.ps1`，参数 `-Mode full|api|files`。服务输出写入 `logs/<服务名>.out.log` 与 `.err.log`；启动后按端口检查 30 秒。构建失败时不启动服务。
+- 停止：使用脚本输出的 PID，`Stop-Process -Id <PID> -Force`。
+- 验证：`.\verify-p1.ps1`。
+- 控制面板：`P1_CONTROL_PANEL.html`。
 
 ---
 
-## 💾 数据库状态
+## 3. 业务流程
 
-**位置**: F:\TableDeconstruction\db.sqlite
+**A. 3000 选文 → 8800 编辑器**
+1. 打开 3000 文件管理页。文件列表与正文经 `/api/obsidian/list`、`/api/obsidian/file` 读取 Obsidian VAULT 内的 `.md`（仅允许 VAULT 内路径，拒绝路径穿越）。
+2. 选择文章并点击填充。父页发送 `obsidian-import`，子页回 `obsidian-import-ack` 后填充编辑器，成功后发送 `obsidian-ready`。父页 3 秒内无 ack 则重载 iframe。
+3. 填充协议实现细节见 §4.3。
 
-**表结构**:
-- `publish_records` - 发布记录
-- `audit_logs` - 审计日志
-- `configs` - 系统配置
+**B. 8800 顶层悬浮面板**
+- 面板只在顶层文档出现（`tools/doocs/server.js` 第 10 行守卫：`window.top !== window` 时不启动）。
+- 按钮：`全选`、`复制正文`、`关闭`。
+- `复制正文`：勾选且仅勾选 1 篇时，取正文并写入剪贴板；0 篇或多篇时提示。
+- 粘贴前须先在 8800 新建一篇空 md。
 
-**初始化状态**: ✅ 自动创建
+**C. 8800 顶层发布到草稿箱**
+- 在 8800 顶层编辑并确认内容，通过 COSE 扩展发布，需已在 mp.weixin 登录。
 
----
-
-## 🎯 系统验证步骤
-
-### 第一步: 检查 API 健康状态
-```bash
-curl http://localhost:3001/health
-# 预期: 200 OK 或 JSON 响应
-```
-
-### 第二步: 创建发布记录
-1. 打开 P1_CONTROL_PANEL.html
-2. 填写标题和内容
-3. 点击"创建记录"
-4. 验证记录是否出现在列表中
-
-### 第三步: 完整的发布流程
-1. 创建 → 获得记录 ID
-2. 提交审核 → 状态变为 pending_review
-3. 批准 → 状态变为 approved
-4. 发布 → 执行 WeChat 发布
-5. 验证数据库中是否记录了 wechat_msg_id
-
-### 第四步: WeChat Token 验证
-```bash
-curl -X POST http://localhost:3001/api/wechat/token
-# 预期: { "access_token": "...", "expires_in": 7200 }
-```
-
-### 第五步: 文件管理器验证
-1. 访问 http://localhost:3000
-2. 应该看到 Obsidian 文件列表
-3. 尝试打开/编辑文件
+**D. 3000 内嵌 8800 发布**
+- 未实现，见 §5。当前替代路径为 B + C。
 
 ---
 
-## 📝 启动/停止命令
+## 4. Doocs 集成事实
 
-**启动系统**:
-```powershell
-cd F:\TableDeconstruction
-.\start-p1.ps1
-```
+### 4.1 页面来源
+- `tools/doocs/node_modules/@doocs/md-cli/server.js:155` 从 `https://md.doocs.org/` 取 HTML。
+- `:160–161` 在 `</head>` 前注入 `/local-storage-adapter.js`。
+- 其余静态资源经代理转发到远程 `md.doocs.org`。编辑器代码来自远程官方站点，本地只能改注入脚本与悬浮面板。
 
-**停止系统** (执行此命令后系统会在 Ctrl+C 时退出):
-```powershell
-Stop-Process -Name node -Force
-```
+### 4.2 Bundle 版本
+- 8800 实际服务的入口 bundle：`/static/js/md-index-BLMbB4cV.js`（从 `http://127.0.0.1:8800/` 根 HTML 取得）。
+- 磁盘文件 `tools/doocs/node_modules/@doocs/md-cli/dist/static/js/md-index-Cl1Uh28s.js` 不是服务版本，不能作为依据。
+- 服务版入口 bundle 不含 IndexedDB 读写代码，存储逻辑在懒加载 chunk 中。
+- 只读副本 `c:\Users\steel\Downloads\md-storage-B8GIogoY.js`，行号以该副本为准。
 
-**验证系统** (在新终端):
-```powershell
-.\verify-p1.ps1
-```
+### 4.3 填充协议（已实现）
+- 子页启动时读取 `/api/doocs/import-data`；无内容则输出 `暂存区无新内容`。
+- 3000 后端 `lastImportData` 仅在内存（`tools/file-manager/server.js` 第 123 行），重启即清空。
+- 代际令牌 `gen` 避免快速切文时的乱序写入。
+- iframe 必须保持布局可见（不能 `display:none`），否则 CM6 无法写入。就绪判断使用 `isConnected`，不用 `offsetParent`（`tools/doocs/server.js:123` 的 `guardCM`）。
 
----
+### 4.4 存储
+- 文章列表：浏览器 IndexedDB 库 `doocs-md`（version 4），store `documents`，keyPath `id`。记录字段：`id`、`title`、`content`、`history`、`createDatetime`、`updateDatetime`、`parentId`、`collapsed`。
+- 其他 IDB store：`cache`、`meta`、`secrets`、`settings`。
+- 当前编辑内容：`localStorage.__editor_content`（VueUse `useStorage`）。后端重启不清空该键，因此重启后显示上一篇。
+- 不同浏览器 profile 的 IndexedDB 数据互相独立。
+- 内存缓存与删除机制（`md-storage-B8GIogoY.js`，已验证）：
+  - 模块级缓存 `K`（约 15269 行）。`X.loadAll()`（约 16562 行）仅在 `K` 为空时从 IDB 填充。
+  - `lt(e)`（约 15755 行）逐条 `put` 集合 `e`，并**删除不在 `e` 中的全部 key**，然后 `K = [...e]`。
+  - `X.saveAll(e)`（约 16949 行）调用 `lt(e)`；`md-post` 中防抖 500 ms，约 6 处调用。
+  - `ut()`（约 15984 行）单篇 `put`，不删除；`savePost`（约 16600 行）走 `ut()`。
+  - 结论：绕过 `K` 直接写 IDB 的记录，会在下一次 `saveAll` 时被删除。
+  - 未验证：触发 `saveAll` 的完整时机；pagehide 备份路径 `ft` / `lt`（约 16378 行）的触发条件。
 
-## 🔧 系统配置
+### 4.5 8800 注入与代码位置
+- `tools/doocs/server.js`：第 10 行顶层守卫；约第 14 行 `selectAllOn`；第 41 行 `btnCopy` 创建；第 85 行 `btnCopy.onclick`；第 123 行 `guardCM`；第 216 行 `execCommand('insertText')`；第 358 行面板注入到 `</body>` 前。
+- `tools/file-manager/server.js`：`/api/doocs/import`（第 131 行）、`/api/obsidian/list`（第 182 行）、`/api/obsidian/file`（第 191 行）、`/api/doocs/import-data`（第 206 行，带 8800 的 CORS）、`/api/doocs/storage/*`（第 231 行）。
+- `tools/file-manager/public/index.html`：3000 前端，内嵌 iframe `#doocsFrame`（约第 190 行）。
 
-**环境**:
-- Node.js: v24.14.1
-- npm: 11.11.0
-- TypeScript: Strict Mode
-- ESM Modules: 启用
-
-**配置文件**:
-- `.env` - 环境变量 (WeChat 凭证等)
-- `tsconfig.json` - TypeScript 配置
-- `package.json` - 项目依赖
-
-**关键配置**:
-```
-PORT: 3001 (API 服务器) ✅ 运行中
-PORT: 3000 (文件管理器) ✅ 运行中
-PORT: 8800 (Doocs 编辑器) ✅ 运行中
-DATABASE: ./db.sqlite ✅ 已初始化
-WECHAT_MODE: real ✅ 配置完成
-```
-
----
-
-## ⚠️ Doocs 编辑器说明
-
-**当前状态**: 由 `start-p1.ps1` 启动（8800，`node tools/doocs/server.js`）
-
-Doocs 编辑器是可选的 Web 排版工具。系统提供以下两种方式：
-
-**方式 1 - 文件管理器中使用**:
-1. 在文件管理器（3000）中打开文件
-2. 内容会被复制到剪贴板
-3. 粘贴到外部 Doocs（如 https://doocs.qiniu.com）进行排版
-4. 排版完成后保存
-
-**方式 2 - 本地 Doocs（8800）**:
-- 随 `start-p1.ps1` 一并启动，访问: http://127.0.0.1:8800
-- 启动链与用法详见 `tools/doocs/README.md`
+### 4.6 残留组件
+- `tools/doocs/local-storage-adapter.js`（约 430 行）：经 `md-cli/server.js:86–92` 提供并注入。
+  - 实测（已验证）：`String(indexedDB.open)` 为原生函数；`window.localStorage.setItem === Storage.prototype.setItem`；`indexedDB` 与 `localStorage` 为 getter-only，赋值被忽略。其替换逻辑未生效。
+  - 仍生效的部分：`init()` 发起 `GET /api/storage/documents`，实测返回 0 个文档。
+- `tools/doocs/local-storage-api.js`（292 行，ESM）：`/api/storage` 路由，由 `md-cli/server.js:21` 导入，`:83` 挂载。数据目录 `tools/doocs/local-storage/documents` 为空。3000 的 `/api/doocs/storage/*` 转发到此；仓库内未找到前端调用方。
+- `src/server.ts:153,191`（3001）另有 `/api/storage/*` 路由，调用方未核查。
 
 ---
 
-## ⚠️ 已知事项
+## 5. 3000 内嵌 8800 发布：阻塞
 
-### 终端显示乱码
-- **原因**: PowerShell 编码问题
-- **影响**: 仅显示问题，不影响功能
-- **解决**: 系统功能正常，可忽略
+### 5.1 检测机制（已验证）
+- 发布弹窗检测的是 **COSE 扩展**提供的 `window.$cose`（扩展 ID `ilhikcdphhpjofhlnbojifbihhfmmhfk`，v1.3.18，路径 `C:\Users\steel\AppData\Local\Google\Chrome\User Data\Default\Extensions\ilhikcdphhpjofhlnbojifbihhfmmhfk\1.3.18_0`）。
+- 实际运行的 bundle `ze()`：`window.$cose !== void 0` 则继续，否则每 500 ms 轮询，最多 11 次；失败则显示“未检测到插件”，“确定”按钮置灰。该提示只控制弹窗。
+- 发布与账号列表依赖 `window.$cose.getAccounts` 与 `window.$cose.addTask`。
+- `$cose` 注入条件（`bundles/content.js` 第 1 行）：页面 origin 为 `https://md.doocs.org`，或 DOM 中存在 `#app` 且包含 `#editor` 与 `#preview #output`（MutationObserver，10 秒超时）。否则不注入 `bundles/inject.js`。
+- `manifest.json` 匹配 `http(s)://*/*`，**没有 `all_frames`**，因此 iframe 中不运行 `content.js`。
+- `bundles/inject.js`：`window.$cose` 在执行时无条件挂载，没有 origin、DOM 或通信前置检查。唯一的注入门槛是 `content.js` 的 `e()`。
+- `addTask(e,t,n)` 对微信：点击当前文档中的复制按钮（`.copy-btn`、`button[class*="copy"]` 或文本“复制”），等待 2 秒，读取 `navigator.clipboard.read()` 的 `text/html`，再发送 `SYNC_TO_PLATFORM`。依赖顶层页面的复制按钮与剪贴板 HTML。
 
-### Ctrl+C 时前后端不会立即退出
-- **原因**: 后台 Job 仍在运行
-- **解决**: 使用 `Stop-Process -Name node -Force` 强制停止
-- **状态**: 已确认此为正常行为
+### 5.2 实测（已验证）
 
-### Doocs 微信发布链路未通（8800）
-- **现状**: 8800 可单独发布到草稿箱；3000 内嵌 Doocs 的发布不通（`window.$syncer` 仅在 8800 顶层页面可用）
-- **详见**: `docs/03-reports/DOOCS_WECHAT_HANDOFF.md`
-- **优先级**: 低（系统主要功能不受影响）
+| 页面 | `typeof window.$cose` |
+|---|---|
+| 8800 顶层 | `'object'` |
+| 3000 顶层 | `'undefined'` |
+| 3000 内嵌 `#doocsFrame` | `'undefined'` |
 
----
+- 3000 顶层 `document.getElementById('app')` 返回 `null`，与代码推断一致，因此 `content.js` 门槛函数提前返回，不注入。
+- 3000 页面不存在 `id="app|editor|preview|output"` 与 `copy-btn`；“复制”仅出现在 alert 文本中。
+- 3000 页面中的 `window.$syncer` 属于另一个扩展（`hchobocdmclopcbnibdnoafilagadion` v2.0.9，`all_frames: true`），与发布检测无关。
 
-## 📊 API 端点速查
-
-### 发布管理
-```
-POST   /api/publish/records           创建记录
-GET    /api/publish/records           列表
-GET    /api/publish/records/:id       详情
-DELETE /api/publish/records/:id       删除
-POST   /api/publish/:id/submit        提交审核
-POST   /api/publish/:id/approve       批准
-POST   /api/publish/:id/reject        拒绝
-POST   /api/publish/:id/execute       执行发布
-```
-
-### WeChat API
-```
-POST   /api/wechat/token              获取令牌
-POST   /api/wechat/draft              保存草稿
-POST   /api/wechat/publish            发布文章
-GET    /api/wechat/history            获取历史
-DELETE /api/wechat/published/:msgId   删除已发布
-```
-
-### 系统
-```
-GET    /                              API 文档
-GET    /health                        健康检查
-GET    /api/publish/stats             统计信息
-```
+### 5.3 结论
+- 3000 内嵌页无法直接获得 `$cose`（无 `all_frames`）。
+- 在 3000 顶层补齐注入门槛后 `$cose` 可以出现，但发布仍需顶层存在可点击的复制按钮并能从剪贴板读到 HTML，二者均未验证，且属于脆弱绕行。
+- 当前决定：以 8800 顶层发布为准；3000 内嵌发布保留为目标，状态为未实现。
 
 ---
 
-## 🎓 下一步操作
+## 6. 已知问题
 
-1. **业务流程验证** (用户)
-   - 完成发布流程测试
-   - 验证 WeChat 实际发送
-   - 检查文件自动发布功能
-
-2. **生产部署** (后续)
-   - 配置 HTTPS
-   - 设置日志收集
-   - 配置备份策略
-   - 性能监控
-
-3. **功能扩展** (可选)
-   - 添加用户认证
-   - 添加权限管理
-   - 添加批量操作
-   - 添加分析统计
+- 偶发“同步失败”，原因未知。
+- 草稿正文需手动“保存草稿”后后端才能看到，原因未知。
+- 标题规则：Doocs 从一级标题自动提取，需确认。
+- 表格、代码块排版未验证。
+- `unset` 代码高亮语言 404（`cdn-doocs…unset.min.js`）。
+- GA 请求 `ERR_NAME_NOT_RESOLVED`、`favicon.ico` 404，未确认影响。
+- `postMessage` targetOrigin 与 3000 不匹配的警告来自既有 `injectedScript`，不是面板代码。
+- 扩展 `hchobocdmclopcbnibdnoafilagadion` 打印 `[Extractor] ... SyntaxError: Unexpected end of JSON input`，不影响流程，来源未定位。
+- 终端中文显示乱码（PowerShell 编码），仅显示问题。
+- 测试：2026-11-19 记录 `npm test` 3/9 套件失败（源码 `.js` 扩展导入在 Jest 中无法解析），本次未复核。
 
 ---
 
-## 📞 故障排查
+## 7. 后端模块（2026-11-18 记录，本次未复核）
 
-**系统无法启动?**
-- 检查端口占用: `Get-NetTCPConnection -LocalPort 3001`
-- 清理进程: `Stop-Process -Name node -Force`
-- 重新启动脚本
-
-**数据库错误?**
-- 删除 `db.sqlite`，系统会自动重建
-- 检查文件权限
-
-**WeChat 令牌获取失败?**
-- 确认 `.env` 中的 APP_ID 和 APP_SECRET
-- 检查 IP 白名单 (108.171.103.61)
-
-**文件管理器不显示文件?**
-- 检查 Obsidian 路径: G:\Obsidian\wechat\桌面解构
-- 确认路径中有 .md 文件
-
----
-
-**系统状态**: ✅ 生产就绪  
-**上次更新**: 2026-11-18 16:15  
-**验证者**: 自动系统检查  
-
-用户现在可以开始业务流程验证。
+- WeChat Token 获取（`/api/wechat/token`）、发布记录（SQLite `db.sqlite`，表 `publish_records`、`audit_logs`、`configs`）、Markdown 渲染、内容验证、文件监听自动发布（监听 Obsidian 目录）。
+- 对应代码：`src/services/`、`src/core/`、`src/db/`、`src/server.ts`。
+- API 端点以 [README_P1.md](README_P1.md) 为准。
