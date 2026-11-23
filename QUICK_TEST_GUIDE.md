@@ -411,6 +411,5 @@ npm run build
 **现在就打开 http://127.0.0.1:3000/ 开始测试吧！** 🚀
 
 如有问题，请查阅详细文档：
-- [IMPROVEMENT_SUMMARY.md](./IMPROVEMENT_SUMMARY.md) - 改进总结
 - [BUSINESS_PROCESS_GUIDE.md](./BUSINESS_PROCESS_GUIDE.md) - 业务流程指南
 - [README_P1.md](./README_P1.md) - 完整系统文档
